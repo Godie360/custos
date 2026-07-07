@@ -11,6 +11,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/Godie360/custos/internal/api/handler"
 	"github.com/Godie360/custos/internal/domain"
@@ -100,9 +102,7 @@ func TestIssuesHandler_GetByID(t *testing.T) {
 
 			h.GetByID(rec, req)
 
-			if rec.Code != tt.wantStatus {
-				t.Errorf("status = %d, want %d", rec.Code, tt.wantStatus)
-			}
+			assert.Equal(t, tt.wantStatus, rec.Code)
 		})
 	}
 }
@@ -162,9 +162,7 @@ func TestIssuesHandler_Patch(t *testing.T) {
 
 			h.Patch(rec, req)
 
-			if rec.Code != tt.wantStatus {
-				t.Errorf("status = %d, want %d (body: %s)", rec.Code, tt.wantStatus, rec.Body.String())
-			}
+			assert.Equal(t, tt.wantStatus, rec.Code, rec.Body.String())
 		})
 	}
 }
@@ -182,16 +180,10 @@ func TestIssuesHandler_List(t *testing.T) {
 
 	h.List(rec, req)
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", rec.Code)
-	}
+	require.Equal(t, http.StatusOK, rec.Code)
 
 	// List returns a JSON array directly.
 	var issues []domain.Issue
-	if err := json.NewDecoder(rec.Body).Decode(&issues); err != nil {
-		t.Fatalf("decode response: %v", err)
-	}
-	if len(issues) != 2 {
-		t.Errorf("got %d issues, want 2", len(issues))
-	}
+	require.NoError(t, json.NewDecoder(rec.Body).Decode(&issues))
+	assert.Len(t, issues, 2)
 }

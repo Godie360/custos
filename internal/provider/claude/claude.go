@@ -92,26 +92,19 @@ func (a *Analyzer) Analyze(ctx context.Context, event domain.AnalysisEvent) (dom
 		req.Header.Set("x-api-key", a.cfg.AI.APIKey)
 		req.Header.Set("anthropic-version", "2023-06-01")
 
-		resp, err := a.client.Do(req)
+		respBytes, status, err := a.doRequest(req)
 		if err != nil {
 			lastErr = fmt.Errorf("claude: http: %w", err)
 			continue
 		}
-		defer resp.Body.Close() //nolint:errcheck // response body drain; error not actionable
 
-		respBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			lastErr = fmt.Errorf("claude: read response: %w", err)
+		if status == http.StatusTooManyRequests || status >= 500 {
+			lastErr = fmt.Errorf("claude: status %d", status)
 			continue
 		}
 
-		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
-			lastErr = fmt.Errorf("claude: status %d", resp.StatusCode)
-			continue
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			return result, fmt.Errorf("claude: status %d: %s", resp.StatusCode, string(respBytes))
+		if status != http.StatusOK {
+			return result, fmt.Errorf("claude: status %d: %s", status, string(respBytes))
 		}
 
 		var rb responseBody
@@ -127,6 +120,16 @@ func (a *Analyzer) Analyze(ctx context.Context, event domain.AnalysisEvent) (dom
 	}
 
 	return result, fmt.Errorf("claude: max retries exceeded: %w", lastErr)
+}
+
+func (a *Analyzer) doRequest(req *http.Request) ([]byte, int, error) {
+	resp, err := a.client.Do(req)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer resp.Body.Close() //nolint:errcheck // response body drain; error not actionable
+	b, err := io.ReadAll(resp.Body)
+	return b, resp.StatusCode, err
 }
 
 func buildPrompt(event domain.AnalysisEvent) string {
