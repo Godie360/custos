@@ -7,13 +7,25 @@ build:
 	go build -o bin/server ./cmd/server
 
 test:
-	go test ./...
+	go test -race -count=1 ./...
 
 test-cover:
-	go test -coverprofile=cover.out ./... && go tool cover -html=cover.out
+	go test -race -coverprofile=cover.out ./... && go tool cover -html=cover.out
+
+test-integration:
+	go test -race -tags=integration ./...
 
 lint:
 	golangci-lint run ./...
+
+lint-fix:
+	golangci-lint run --fix ./...
+
+fmt:
+	golangci-lint fmt ./...
+
+vuln:
+	govulncheck ./...
 
 migrate-up:
 	migrate -path migrations -database "$(DATABASE_URL)" up

@@ -3,11 +3,14 @@ package api
 import (
 	"database/sql"
 	"net/http"
+	_ "net/http/pprof" // side-effect: registers /debug/pprof/* on DefaultServeMux
 	"os"
 
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/iPFSoftwares/custos/internal/api/handler"
 	"github.com/iPFSoftwares/custos/internal/api/middleware"
 	"github.com/iPFSoftwares/custos/internal/api/render"
@@ -40,6 +43,8 @@ func NewRouter(deps RouterDeps) http.Handler {
 		MaxAge:         300,
 	}))
 	r.Use(chimiddleware.Recoverer)
+	r.Use(middleware.SecurityHeaders)
+	r.Use(middleware.RateLimit)
 	r.Use(middleware.RequestID)
 	r.Use(middleware.Logger)
 	r.Use(chimiddleware.RequestSize(maxBodyBytes))
@@ -61,6 +66,16 @@ func NewRouter(deps RouterDeps) http.Handler {
 		render.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
+	// Prometheus metrics — scraped by Prometheus server.
+	r.Get("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		promhttp.Handler().ServeHTTP(w, r)
+	})
+
+	// pprof profiling — only when CUSTOS_PPROF=true to prevent accidental exposure.
+	if os.Getenv("CUSTOS_PPROF") == "true" {
+		r.Mount("/debug", http.DefaultServeMux)
+	}
+
 	// OpenAPI spec — served for Swagger UI.
 	r.Get("/api/openapi.yaml", func(w http.ResponseWriter, r *http.Request) {
 		specPath := os.Getenv("OPENAPI_SPEC_PATH")
@@ -71,6 +86,8 @@ func NewRouter(deps RouterDeps) http.Handler {
 	})
 
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(middleware.Metrics)
+
 		// Ingest — requires valid API key.
 		r.With(middleware.APIKey(deps.APIKeys, deps.Projects)).
 			Post("/ingest", deps.Ingest.ServeHTTP)

@@ -7,8 +7,12 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/iPFSoftwares/custos/internal/domain"
+	"github.com/iPFSoftwares/custos/internal/store"
 	generated "github.com/iPFSoftwares/custos/internal/store/postgres/generated"
 )
+
+// Compile-time interface check.
+var _ store.EventStore = (*EventStore)(nil)
 
 // EventStore is the PostgreSQL implementation of store.EventStore.
 type EventStore struct {

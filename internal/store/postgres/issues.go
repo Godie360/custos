@@ -13,6 +13,9 @@ import (
 
 )
 
+// Compile-time interface check.
+var _ store.IssueStore = (*IssueStore)(nil)
+
 // IssueStore is the PostgreSQL implementation of store.IssueStore.
 type IssueStore struct {
 	q *generated.Queries

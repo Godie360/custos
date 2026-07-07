@@ -9,6 +9,9 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
+// Compile-time interface check.
+var _ queue.Consumer = (*Consumer)(nil)
+
 // Consumer is a Kafka-backed implementation of queue.Consumer.
 type Consumer struct {
 	brokers []string

@@ -3,14 +3,75 @@ run:
 
 linters:
   enable:
-    - errcheck
-    - govet
-    - staticcheck
-    - unused
-    - gofmt
-    - goimports
-    - gocritic
+    # Correctness
+    - errcheck       # unhandled errors
+    - govet          # vet checks (shadowing, printf formats, etc.)
+    - staticcheck    # advanced static analysis
+    - unused         # unexported identifiers that are never used
+    - nilerr         # return nil instead of err accidentally
+    - bodyclose      # unclosed http.Response.Body leaks
+    - sqlclosecheck  # unclosed sql.Rows/Stmt leaks
+    - copylock       # mutexes or sync types copied by value
+
+    # Security
+    - gosec          # OWASP-aligned security checks
+
+    # Error handling
+    - wrapcheck      # errors from external packages must be wrapped
+    - noctx          # http.NewRequest without context
+
+    # Style & formatting
+    - gofmt          # standard formatting
+    - goimports      # import organisation
+    - gocritic       # opinionated style and correctness checks
+    - revive         # fast, configurable replacement for golint
+
+    # Complexity & quality
+    - cyclop         # cyclomatic complexity
+    - gocognit       # cognitive complexity
+    - dupl           # copy-paste detection
+    - goconst        # string literals that could be constants
+    - ineffassign    # assignments whose result is never used
+    - unconvert      # unnecessary type conversions
+    - unparam        # unused function parameters
+
+    # nolint discipline
+    - nolintlint     # bare //nolint without linter name or reason
 
 linters-settings:
   goimports:
     local-prefixes: github.com/iPFSoftwares/custos
+
+  revive:
+    rules:
+      - name: exported
+        severity: warning
+
+  cyclop:
+    max-complexity: 15
+
+  gocognit:
+    min-complexity: 20
+
+  gosec:
+    excludes:
+      - G104 # unhandled errors — covered by errcheck
+
+  wrapcheck:
+    ignorePackageGlobs:
+      - github.com/iPFSoftwares/custos/internal/*
+      - github.com/go-chi/chi/*
+
+  nolintlint:
+    require-explanation: true
+    require-specific: true
+
+issues:
+  exclude-rules:
+    # Test files have relaxed rules.
+    - path: _test\.go
+      linters:
+        - errcheck
+        - wrapcheck
+        - dupl
+        - gosec
