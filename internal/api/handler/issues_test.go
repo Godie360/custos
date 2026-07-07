@@ -12,9 +12,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"github.com/iPFSoftwares/custos/internal/api/handler"
-	"github.com/iPFSoftwares/custos/internal/domain"
-	"github.com/iPFSoftwares/custos/internal/store"
+	"github.com/Godie360/custos/internal/api/handler"
+	"github.com/Godie360/custos/internal/domain"
+	"github.com/Godie360/custos/internal/store"
 )
 
 // stubIssueStore is a thread-safe in-memory stub satisfying handler.IssueStoreReader.

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/iPFSoftwares/custos/internal/config"
-	"github.com/iPFSoftwares/custos/internal/domain"
+	"github.com/Godie360/custos/internal/config"
+	"github.com/Godie360/custos/internal/domain"
 )
 
 const (

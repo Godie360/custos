@@ -11,10 +11,10 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"github.com/iPFSoftwares/custos/internal/api/handler"
-	"github.com/iPFSoftwares/custos/internal/api/middleware"
-	"github.com/iPFSoftwares/custos/internal/api/render"
-	"github.com/iPFSoftwares/custos/internal/store"
+	"github.com/Godie360/custos/internal/api/handler"
+	"github.com/Godie360/custos/internal/api/middleware"
+	"github.com/Godie360/custos/internal/api/render"
+	"github.com/Godie360/custos/internal/store"
 )
 
 const maxBodyBytes = 1 << 20 // 1 MiB

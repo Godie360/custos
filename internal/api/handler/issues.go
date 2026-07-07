@@ -10,9 +10,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"github.com/iPFSoftwares/custos/internal/api/render"
-	"github.com/iPFSoftwares/custos/internal/domain"
-	"github.com/iPFSoftwares/custos/internal/store"
+	"github.com/Godie360/custos/internal/api/render"
+	"github.com/Godie360/custos/internal/domain"
+	"github.com/Godie360/custos/internal/store"
 )
 
 // IssueStoreReader is the minimal read interface needed by IssuesHandler.

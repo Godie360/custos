@@ -3,12 +3,12 @@ package provider
 import (
 	"fmt"
 
-	"github.com/iPFSoftwares/custos/internal/config"
-	"github.com/iPFSoftwares/custos/internal/domain"
-	"github.com/iPFSoftwares/custos/internal/provider/claude"
-	"github.com/iPFSoftwares/custos/internal/provider/gemini"
-	"github.com/iPFSoftwares/custos/internal/provider/ollama"
-	"github.com/iPFSoftwares/custos/internal/provider/openai"
+	"github.com/Godie360/custos/internal/config"
+	"github.com/Godie360/custos/internal/domain"
+	"github.com/Godie360/custos/internal/provider/claude"
+	"github.com/Godie360/custos/internal/provider/gemini"
+	"github.com/Godie360/custos/internal/provider/ollama"
+	"github.com/Godie360/custos/internal/provider/openai"
 )
 
 // Load returns the AI analyzer configured via cfg.AI.Provider.

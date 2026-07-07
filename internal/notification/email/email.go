@@ -6,8 +6,8 @@ import (
 	"net/smtp"
 	"strings"
 
-	"github.com/iPFSoftwares/custos/internal/config"
-	"github.com/iPFSoftwares/custos/internal/domain"
+	"github.com/Godie360/custos/internal/config"
+	"github.com/Godie360/custos/internal/domain"
 )
 
 // Notifier implements domain.Notifier by sending email via SMTP.

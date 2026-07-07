@@ -9,16 +9,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/iPFSoftwares/custos/internal/api"
-	"github.com/iPFSoftwares/custos/internal/api/handler"
-	"github.com/iPFSoftwares/custos/internal/config"
-	"github.com/iPFSoftwares/custos/internal/domain"
-	"github.com/iPFSoftwares/custos/internal/notification/googlechat"
-	"github.com/iPFSoftwares/custos/internal/notification/webhook"
-	"github.com/iPFSoftwares/custos/internal/provider"
-	kafkaimpl "github.com/iPFSoftwares/custos/internal/queue/kafka"
-	"github.com/iPFSoftwares/custos/internal/service"
-	pgstore "github.com/iPFSoftwares/custos/internal/store/postgres"
+	"github.com/Godie360/custos/internal/api"
+	"github.com/Godie360/custos/internal/api/handler"
+	"github.com/Godie360/custos/internal/config"
+	"github.com/Godie360/custos/internal/domain"
+	"github.com/Godie360/custos/internal/notification/googlechat"
+	"github.com/Godie360/custos/internal/notification/webhook"
+	"github.com/Godie360/custos/internal/provider"
+	kafkaimpl "github.com/Godie360/custos/internal/queue/kafka"
+	"github.com/Godie360/custos/internal/service"
+	pgstore "github.com/Godie360/custos/internal/store/postgres"
 )
 
 func main() {

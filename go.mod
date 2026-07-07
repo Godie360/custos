@@ -1,4 +1,4 @@
-module github.com/iPFSoftwares/custos
+module github.com/Godie360/custos
 
 go 1.26.4
 

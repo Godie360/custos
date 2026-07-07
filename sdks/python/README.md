@@ -1,6 +1,6 @@
 # custos-sdk
 
-Python SDK for [Custos](https://github.com/iPFSoftwares/custos) — AI-powered log intelligence.
+Python SDK for [Custos](https://github.com/Godie360/custos) — AI-powered log intelligence.
 
 ## Installation
 

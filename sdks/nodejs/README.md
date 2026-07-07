@@ -1,6 +1,6 @@
 # @custos/sdk
 
-Node.js and NestJS SDK for [Custos](https://github.com/iPFSoftwares/custos) — automatic error capture with AI-powered explanations.
+Node.js and NestJS SDK for [Custos](https://github.com/Godie360/custos) — automatic error capture with AI-powered explanations.
 
 ## Install
 

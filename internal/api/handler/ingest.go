@@ -8,10 +8,10 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/iPFSoftwares/custos/internal/api/middleware"
-	"github.com/iPFSoftwares/custos/internal/api/render"
-	"github.com/iPFSoftwares/custos/internal/domain"
-	"github.com/iPFSoftwares/custos/pkg/event"
+	"github.com/Godie360/custos/internal/api/middleware"
+	"github.com/Godie360/custos/internal/api/render"
+	"github.com/Godie360/custos/internal/domain"
+	"github.com/Godie360/custos/pkg/event"
 )
 
 // IngestionService is the minimal interface consumed by IngestHandler.

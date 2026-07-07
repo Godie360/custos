@@ -57,7 +57,7 @@ linters:
 
     wrapcheck:
       ignore-package-globs:
-        - github.com/iPFSoftwares/custos/internal/*
+        - github.com/Godie360/custos/internal/*
         - github.com/go-chi/chi/*
 
     nolintlint:
@@ -83,4 +83,4 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/iPFSoftwares/custos
+        - github.com/Godie360/custos
