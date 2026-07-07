@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   timeout: 5m
 
@@ -19,15 +21,15 @@ linters:
     - wrapcheck      # errors from external packages must be wrapped
     - noctx          # http.NewRequest without context
 
-    # Style & formatting
-    - gofmt          # standard formatting
-    - goimports      # import organisation
+    # Style & quality
     - gocritic       # opinionated style and correctness checks
     - revive         # fast, configurable replacement for golint
 
-    # Complexity & quality
+    # Complexity
     - cyclop         # cyclomatic complexity
     - gocognit       # cognitive complexity
+
+    # Quality
     - dupl           # copy-paste detection
     - goconst        # string literals that could be constants
     - ineffassign    # assignments whose result is never used
@@ -37,40 +39,48 @@ linters:
     # nolint discipline
     - nolintlint     # bare //nolint without linter name or reason
 
-linters-settings:
-  goimports:
-    local-prefixes: github.com/iPFSoftwares/custos
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true  # interface docstrings cover the contract; impl methods don't need duplicates
 
-  revive:
+    cyclop:
+      max-complexity: 20
+
+    gocognit:
+      min-complexity: 30
+
+    gosec:
+      excludes:
+        - G104 # unhandled errors — covered by errcheck
+
+    wrapcheck:
+      ignorePackageGlobs:
+        - github.com/iPFSoftwares/custos/internal/*
+        - github.com/go-chi/chi/*
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+  exclusions:
     rules:
-      - name: exported
-        severity: warning
+      - path: _test\.go
+        linters:
+          - errcheck
+          - wrapcheck
+          - dupl
+          - gosec
+          - noctx    # httptest.NewRequest without context is idiomatic in handler tests
+          - goconst  # repeated string literals in table-driven tests are fine
 
-  cyclop:
-    max-complexity: 20
+formatters:
+  enable:
+    - gofmt
+    - goimports
 
-  gocognit:
-    min-complexity: 30
-
-  gosec:
-    excludes:
-      - G104 # unhandled errors — covered by errcheck
-
-  wrapcheck:
-    ignorePackageGlobs:
-      - github.com/iPFSoftwares/custos/internal/*
-      - github.com/go-chi/chi/*
-
-  nolintlint:
-    require-explanation: true
-    require-specific: true
-
-issues:
-  exclude-rules:
-    # Test files have relaxed rules.
-    - path: _test\.go
-      linters:
-        - errcheck
-        - wrapcheck
-        - dupl
-        - gosec
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/iPFSoftwares/custos

@@ -2,10 +2,12 @@ package metrics
 
 import "github.com/prometheus/client_golang/prometheus"
 
+const namespace = "custos"
+
 // PromQL: rate(custos_http_requests_total[5m])
 var HTTPRequestsTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Namespace: "custos",
+		Namespace: namespace,
 		Name:      "http_requests_total",
 		Help:      "Total number of HTTP requests by method, route, and status.",
 	},
@@ -15,7 +17,7 @@ var HTTPRequestsTotal = prometheus.NewCounterVec(
 // PromQL: histogram_quantile(0.99, sum(rate(custos_http_duration_seconds_bucket[5m])) by (le, route))
 var HTTPDurationSeconds = prometheus.NewHistogramVec(
 	prometheus.HistogramOpts{
-		Namespace: "custos",
+		Namespace: namespace,
 		Name:      "http_duration_seconds",
 		Help:      "HTTP request latency in seconds.",
 		Buckets:   prometheus.DefBuckets,
@@ -40,7 +42,7 @@ var IssuesCreatedTotal = prometheus.NewCounter(prometheus.CounterOpts{
 // PromQL: rate(custos_analysis_total[5m])
 var AnalysisTotal = prometheus.NewCounterVec(
 	prometheus.CounterOpts{
-		Namespace: "custos",
+		Namespace: namespace,
 		Name:      "analysis_total",
 		Help:      "Total AI analysis results by outcome (success, failed).",
 	},

@@ -40,7 +40,10 @@ func NewAnalysisService(
 
 // Run subscribes to the analysis topic and processes messages until ctx is cancelled.
 func (s *AnalysisService) Run(ctx context.Context, topic string) error {
-	return s.consumer.Subscribe(ctx, topic, s.handleMessage)
+	if err := s.consumer.Subscribe(ctx, topic, s.handleMessage); err != nil {
+		return fmt.Errorf("analysis service: subscribe: %w", err)
+	}
+	return nil
 }
 
 func (s *AnalysisService) handleMessage(ctx context.Context, msg queue.Message) error {

@@ -33,7 +33,7 @@ func (c *Consumer) Subscribe(ctx context.Context, topic string, handler func(ctx
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB
 	})
-	defer r.Close()
+	defer r.Close() //nolint:errcheck // reader cleanup on exit; error not actionable
 
 	for {
 		m, err := r.FetchMessage(ctx)

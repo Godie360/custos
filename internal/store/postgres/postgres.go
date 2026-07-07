@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -28,7 +29,7 @@ func Open(dsn string) (*sql.DB, error) {
 	db.SetConnMaxLifetime(5 * time.Minute)
 	db.SetConnMaxIdleTime(2 * time.Minute)
 
-	if err := db.Ping(); err != nil {
+	if err := db.PingContext(context.Background()); err != nil {
 		return nil, fmt.Errorf("postgres: ping: %w", err)
 	}
 	return db, nil
@@ -36,7 +37,7 @@ func Open(dsn string) (*sql.DB, error) {
 
 // Ping checks that the database is reachable. Use it in health checks.
 func Ping(db *sql.DB) error {
-	if err := db.Ping(); err != nil {
+	if err := db.PingContext(context.Background()); err != nil {
 		return fmt.Errorf("postgres: ping: %w", err)
 	}
 	return nil

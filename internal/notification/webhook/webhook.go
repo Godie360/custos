@@ -44,7 +44,7 @@ func (n *Notifier) Notify(ctx context.Context, payload domain.AlertPayload) erro
 	if err != nil {
 		return fmt.Errorf("webhook: post: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // response body drain; error not actionable
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("webhook: unexpected status %d", resp.StatusCode)

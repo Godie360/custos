@@ -38,7 +38,7 @@ func main() {
 		slog.Error("failed to connect to postgres", slog.String("error", err.Error()))
 		os.Exit(1)
 	}
-	defer db.Close()
+	defer db.Close() //nolint:errcheck // connection cleanup at shutdown
 
 	migrationsPath := os.Getenv("MIGRATIONS_PATH")
 	if migrationsPath == "" {
@@ -53,8 +53,8 @@ func main() {
 	// 4. Init Kafka producer and consumer.
 	kafkaProducer := kafkaimpl.NewProducer(cfg)
 	kafkaConsumer := kafkaimpl.NewConsumer(cfg)
-	defer kafkaProducer.Close()
-	defer kafkaConsumer.Close()
+	defer kafkaProducer.Close() //nolint:errcheck // connection cleanup at shutdown
+	defer kafkaConsumer.Close() //nolint:errcheck // connection cleanup at shutdown
 
 	// 5. Load AI provider (optional — system continues without analysis).
 	analyzer, err := provider.Load(cfg)

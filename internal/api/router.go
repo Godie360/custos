@@ -82,7 +82,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 		if specPath == "" {
 			specPath = "api/openapi.yaml"
 		}
-		http.ServeFile(w, r, specPath)
+		http.ServeFile(w, r, specPath) //nolint:gosec // G703: specPath is operator-set via env var, not user input
 	})
 
 	r.Route("/api/v1", func(r chi.Router) {
