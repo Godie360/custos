@@ -1,0 +1,19 @@
+[build]
+  cmd = "go build -o tmp/server ./cmd/server"
+  bin = "tmp/server"
+  include_ext = ["go"]
+  exclude_dir = ["docs", ".agents", "dashboard", "sdks", "tmp", "vendor"]
+  watch_dir = ["cmd", "internal", "pkg"]
+  delay = 500
+
+[log]
+  time = true
+
+[color]
+  main     = "magenta"
+  watcher  = "cyan"
+  build    = "yellow"
+  runner   = "green"
+
+[misc]
+  clean_on_exit = true
