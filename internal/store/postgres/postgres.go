@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -13,16 +14,28 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// Open opens a PostgreSQL connection and verifies connectivity.
+// Open opens a PostgreSQL connection, configures the pool, and verifies connectivity.
 func Open(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("postgres: open: %w", err)
 	}
+
+	// Connection pool tuning: limits prevent goroutine/file-descriptor exhaustion.
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(2 * time.Minute)
+
 	if err := db.Ping(); err != nil {
 		return nil, fmt.Errorf("postgres: ping: %w", err)
 	}
 	return db, nil
+}
+
+// Ping checks that the database is reachable. Use it in health checks.
+func Ping(db *sql.DB) error {
+	return db.Ping()
 }
 
 // RunMigrations runs all pending up migrations from migrationsPath.

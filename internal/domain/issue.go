@@ -17,17 +17,17 @@ const (
 
 // Issue is a deduplicated, AI-enriched error group.
 type Issue struct {
-	ID                uuid.UUID
-	Fingerprint       string
-	ProjectID         uuid.UUID
-	Service           string
-	Environment       string
-	FirstSeen         time.Time
-	LastSeen          time.Time
-	OccurrenceCount   int
-	Status            IssueStatus
-	Severity          string
-	AIExplanation     string
-	AILikelyCause     string
-	AISuggestedChecks []string
+	ID                uuid.UUID   `json:"id"`
+	Fingerprint       string      `json:"fingerprint"`
+	ProjectID         uuid.UUID   `json:"project_id"`
+	Service           string      `json:"service"`
+	Environment       string      `json:"environment"`
+	FirstSeen         time.Time   `json:"first_seen"`
+	LastSeen          time.Time   `json:"last_seen"`
+	OccurrenceCount   int         `json:"occurrence_count"`
+	Status            IssueStatus `json:"status"`
+	Severity          string      `json:"severity"`
+	AIExplanation     string      `json:"ai_explanation,omitempty"`
+	AILikelyCause     string      `json:"ai_likely_cause,omitempty"`
+	AISuggestedChecks []string    `json:"ai_suggested_checks,omitempty"`
 }

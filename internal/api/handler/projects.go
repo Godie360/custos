@@ -14,19 +14,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/iPFSoftwares/custos/internal/api/render"
 	"github.com/iPFSoftwares/custos/internal/domain"
 )
 
 // systemOwnerID is the fixed seed user used as project owner before auth is implemented.
 var systemOwnerID = uuid.MustParse("00000000-0000-0000-0000-000000000001")
-
-var nonAlphanumeric = regexp.MustCompile(`[^a-z0-9]+`)
-
-func slugify(s string) string {
-	s = strings.ToLower(strings.TrimSpace(s))
-	s = nonAlphanumeric.ReplaceAllString(s, "-")
-	return strings.Trim(s, "-")
-}
 
 // ProjectsStore is the minimal interface needed by ProjectsHandler.
 type ProjectsStore interface {
@@ -58,90 +51,98 @@ func (h *ProjectsHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Name        string `json:"name"`
 		Description string `json:"description"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Name == "" {
-		http.Error(w, "name is required", http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(w, r, http.StatusBadRequest, "invalid_body", "request body must be valid JSON", err)
+		return
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		render.Error(w, r, http.StatusUnprocessableEntity, "missing_fields", "name is required", nil)
 		return
 	}
 
 	project := &domain.Project{
 		ID:        uuid.New(),
-		Name:      req.Name,
+		Name:      strings.TrimSpace(req.Name),
 		Slug:      slugify(req.Name),
 		OwnerID:   systemOwnerID,
 		CreatedAt: time.Now().UTC(),
 	}
 
 	if err := h.projects.Create(r.Context(), project); err != nil {
-		http.Error(w, "failed to create project", http.StatusInternalServerError)
+		if errors.Is(err, domain.ErrConflict) {
+			render.Error(w, r, http.StatusConflict, "slug_conflict", "a project with this name already exists", nil)
+			return
+		}
+		render.Error(w, r, http.StatusInternalServerError, "store_error", "failed to create project", err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(project)
+	render.JSON(w, http.StatusCreated, project)
 }
 
 // List handles GET /api/v1/projects.
 func (h *ProjectsHandler) List(w http.ResponseWriter, r *http.Request) {
 	projects, err := h.projects.List(r.Context())
 	if err != nil {
-		http.Error(w, "failed to list projects", http.StatusInternalServerError)
+		render.Error(w, r, http.StatusInternalServerError, "store_error", "failed to list projects", err)
 		return
 	}
 	if projects == nil {
 		projects = []*domain.Project{}
 	}
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(projects)
+	render.JSON(w, http.StatusOK, projects)
 }
 
 // CreateAPIKey handles POST /api/v1/projects/{id}/keys.
 func (h *ProjectsHandler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	projectID, err := uuid.Parse(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, "invalid project id", http.StatusBadRequest)
+		render.Error(w, r, http.StatusBadRequest, "invalid_id", "project id must be a valid UUID", nil)
 		return
 	}
 
 	if _, err := h.projects.GetByID(r.Context(), projectID); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			http.Error(w, "project not found", http.StatusNotFound)
+			render.Error(w, r, http.StatusNotFound, "not_found", "project not found", nil)
 			return
 		}
-		http.Error(w, "failed to retrieve project", http.StatusInternalServerError)
+		render.Error(w, r, http.StatusInternalServerError, "store_error", "failed to retrieve project", err)
 		return
 	}
 
 	var req struct {
 		Name string `json:"name"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Name == "" {
-		http.Error(w, "name is required", http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		render.Error(w, r, http.StatusBadRequest, "invalid_body", "request body must be valid JSON", err)
+		return
+	}
+	if strings.TrimSpace(req.Name) == "" {
+		render.Error(w, r, http.StatusUnprocessableEntity, "missing_fields", "name is required", nil)
 		return
 	}
 
 	rawKey, err := generateKey()
 	if err != nil {
-		http.Error(w, "failed to generate API key", http.StatusInternalServerError)
+		render.Error(w, r, http.StatusInternalServerError, "internal_error", "failed to generate API key", err)
 		return
 	}
 
 	key := &domain.APIKey{
 		ID:        uuid.New(),
 		ProjectID: projectID,
-		Label:     req.Name,
+		Label:     strings.TrimSpace(req.Name),
 		KeyHash:   hashKey(rawKey),
 		CreatedAt: time.Now().UTC(),
 	}
 
 	if err := h.apiKeys.Create(r.Context(), key); err != nil {
-		http.Error(w, "failed to create API key", http.StatusInternalServerError)
+		render.Error(w, r, http.StatusInternalServerError, "store_error", "failed to create API key", err)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]any{
+	// Return the plaintext key exactly once — it is not stored.
+	render.JSON(w, http.StatusCreated, map[string]any{
 		"id":         key.ID,
 		"key":        rawKey,
 		"project_id": key.ProjectID,
@@ -154,16 +155,16 @@ func (h *ProjectsHandler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 func (h *ProjectsHandler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 	keyID, err := uuid.Parse(chi.URLParam(r, "kid"))
 	if err != nil {
-		http.Error(w, "invalid key id", http.StatusBadRequest)
+		render.Error(w, r, http.StatusBadRequest, "invalid_id", "key id must be a valid UUID", nil)
 		return
 	}
 
 	if err := h.apiKeys.Revoke(r.Context(), keyID); err != nil {
 		if errors.Is(err, domain.ErrNotFound) {
-			http.Error(w, "key not found", http.StatusNotFound)
+			render.Error(w, r, http.StatusNotFound, "not_found", "API key not found", nil)
 			return
 		}
-		http.Error(w, "failed to revoke key", http.StatusInternalServerError)
+		render.Error(w, r, http.StatusInternalServerError, "store_error", "failed to revoke API key", err)
 		return
 	}
 
@@ -181,4 +182,12 @@ func generateKey() (string, error) {
 func hashKey(raw string) string {
 	sum := sha256.Sum256([]byte(raw))
 	return hex.EncodeToString(sum[:])
+}
+
+var nonAlphanumeric = regexp.MustCompile(`[^a-z0-9]+`)
+
+func slugify(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	s = nonAlphanumeric.ReplaceAllString(s, "-")
+	return strings.Trim(s, "-")
 }
