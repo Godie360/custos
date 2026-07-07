@@ -15,3 +15,11 @@ cover.out
 
 # OS
 .DS_Store
+
+# Python SDK
+sdks/python/.venv/
+sdks/python/__pycache__/
+sdks/python/**/__pycache__/
+sdks/python/**/*.pyc
+sdks/python/.pytest_cache/
+sdks/python/*.egg-info/
