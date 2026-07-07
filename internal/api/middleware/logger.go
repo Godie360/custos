@@ -25,7 +25,7 @@ func (rw *responseWriter) WriteHeader(code int) {
 func (rw *responseWriter) Write(b []byte) (int, error) {
 	n, err := rw.ResponseWriter.Write(b)
 	rw.bytesWritten += n
-	return n, err
+	return n, err //nolint:wrapcheck // delegating ResponseWriter.Write — wrapping the interface error loses its identity
 }
 
 // Logger logs each HTTP request as a structured slog entry.

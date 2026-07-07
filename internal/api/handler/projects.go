@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+
 	"github.com/iPFSoftwares/custos/internal/api/render"
 	"github.com/iPFSoftwares/custos/internal/domain"
 )
@@ -174,7 +176,7 @@ func (h *ProjectsHandler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 func generateKey() (string, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
-		return "", err
+		return "", fmt.Errorf("generate key: %w", err)
 	}
 	return "custos_" + hex.EncodeToString(b), nil
 }

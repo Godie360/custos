@@ -9,9 +9,10 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/iPFSoftwares/custos/internal/domain"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
+
+	"github.com/iPFSoftwares/custos/internal/domain"
 )
 
 // Open opens a PostgreSQL connection, configures the pool, and verifies connectivity.
@@ -35,7 +36,10 @@ func Open(dsn string) (*sql.DB, error) {
 
 // Ping checks that the database is reachable. Use it in health checks.
 func Ping(db *sql.DB) error {
-	return db.Ping()
+	if err := db.Ping(); err != nil {
+		return fmt.Errorf("postgres: ping: %w", err)
+	}
+	return nil
 }
 
 // RunMigrations runs all pending up migrations from migrationsPath.

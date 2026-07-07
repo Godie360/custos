@@ -77,10 +77,10 @@ func (a *Analyzer) Analyze(ctx context.Context, event domain.AnalysisEvent) (dom
 
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		if attempt > 0 {
-			backoff := time.Duration(1<<uint(attempt-1)) * time.Second
+			backoff := time.Duration(1<<uint(attempt-1)) * time.Second //nolint:gosec // G115: attempt is bounded by maxRetries (<5)
 			select {
 			case <-ctx.Done():
-				return result, ctx.Err()
+				return result, fmt.Errorf("context cancelled: %w", ctx.Err())
 			case <-time.After(backoff):
 			}
 		}

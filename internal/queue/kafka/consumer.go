@@ -4,9 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/segmentio/kafka-go"
+
 	"github.com/iPFSoftwares/custos/internal/config"
 	"github.com/iPFSoftwares/custos/internal/queue"
-	"github.com/segmentio/kafka-go"
 )
 
 // Compile-time interface check.

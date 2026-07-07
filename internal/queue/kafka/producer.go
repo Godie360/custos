@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/segmentio/kafka-go"
+
 	"github.com/iPFSoftwares/custos/internal/config"
 	"github.com/iPFSoftwares/custos/internal/queue"
-	"github.com/segmentio/kafka-go"
 )
 
 // Compile-time interface check.
@@ -67,5 +68,8 @@ func (p *Producer) Publish(ctx context.Context, topic string, key, value []byte)
 
 // Close flushes and closes the underlying Kafka writer.
 func (p *Producer) Close() error {
-	return p.writer.Close()
+	if err := p.writer.Close(); err != nil {
+		return fmt.Errorf("kafka producer: close: %w", err)
+	}
+	return nil
 }

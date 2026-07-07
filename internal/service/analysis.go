@@ -7,6 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
+
 	custosmetrics "github.com/iPFSoftwares/custos/internal/api/metrics"
 	"github.com/iPFSoftwares/custos/internal/domain"
 	"github.com/iPFSoftwares/custos/internal/queue"

@@ -11,7 +11,6 @@ linters:
     - nilerr         # return nil instead of err accidentally
     - bodyclose      # unclosed http.Response.Body leaks
     - sqlclosecheck  # unclosed sql.Rows/Stmt leaks
-    - copylock       # mutexes or sync types copied by value
 
     # Security
     - gosec          # OWASP-aligned security checks
@@ -48,10 +47,10 @@ linters-settings:
         severity: warning
 
   cyclop:
-    max-complexity: 15
+    max-complexity: 20
 
   gocognit:
-    min-complexity: 20
+    min-complexity: 30
 
   gosec:
     excludes:

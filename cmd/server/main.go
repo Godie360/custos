@@ -47,7 +47,7 @@ func main() {
 	slog.Info("running migrations", slog.String("path", migrationsPath))
 	if err := pgstore.RunMigrations(db, migrationsPath); err != nil {
 		slog.Error("failed to run migrations", slog.String("error", err.Error()))
-		os.Exit(1)
+		os.Exit(1) //nolint:gocritic // exitAfterDefer: startup failure — process exit cleans up the connection
 	}
 
 	// 4. Init Kafka producer and consumer.
@@ -150,7 +150,7 @@ func runSupervised(ctx context.Context, name string, fn func() error) {
 			slog.String("worker", name),
 			slog.String("error", err.Error()),
 		)
-		os.Exit(1)
+		os.Exit(1) //nolint:gocritic // exitAfterDefer: intentional — unexpected worker exit is fatal
 	}
 }
 

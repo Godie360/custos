@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
+
 	custosmetrics "github.com/iPFSoftwares/custos/internal/api/metrics"
 )
 

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/iPFSoftwares/custos/internal/domain"
 	"github.com/iPFSoftwares/custos/internal/store"
 	generated "github.com/iPFSoftwares/custos/internal/store/postgres/generated"

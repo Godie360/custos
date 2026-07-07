@@ -34,7 +34,7 @@ type cardPayload struct {
 }
 
 type card struct {
-	Header   cardHeader   `json:"header"`
+	Header   cardHeader    `json:"header"`
 	Sections []cardSection `json:"sections"`
 }
 

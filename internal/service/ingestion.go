@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	custosmetrics "github.com/iPFSoftwares/custos/internal/api/metrics"
 	"github.com/iPFSoftwares/custos/internal/config"
 	"github.com/iPFSoftwares/custos/internal/domain"

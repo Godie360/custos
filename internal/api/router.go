@@ -3,7 +3,7 @@ package api
 import (
 	"database/sql"
 	"net/http"
-	_ "net/http/pprof" // side-effect: registers /debug/pprof/* on DefaultServeMux
+	_ "net/http/pprof" //nolint:gosec // G108: pprof is only mounted when CUSTOS_PPROF=true; not exposed by default
 	"os"
 
 	"github.com/go-chi/chi/v5"
