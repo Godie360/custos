@@ -77,7 +77,7 @@ func (a *Analyzer) Analyze(ctx context.Context, event domain.AnalysisEvent) (dom
 			backoff := time.Duration(1<<uint(attempt-1)) * time.Second
 			select {
 			case <-ctx.Done():
-				return result, ctx.Err()
+				return result, fmt.Errorf("context cancelled: %w", ctx.Err())
 			case <-time.After(backoff):
 			}
 		}
@@ -99,7 +99,7 @@ func (a *Analyzer) Analyze(ctx context.Context, event domain.AnalysisEvent) (dom
 			lastErr = fmt.Errorf("openai: http: %w", err)
 			continue
 		}
-		defer resp.Body.Close()
+		defer resp.Body.Close() //nolint:errcheck // response body drain; error not actionable
 
 		respBytes, err := io.ReadAll(resp.Body)
 		if err != nil {

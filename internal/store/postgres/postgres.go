@@ -1,28 +1,46 @@
 package postgres
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/iPFSoftwares/custos/internal/domain"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
+
+	"github.com/iPFSoftwares/custos/internal/domain"
 )
 
-// Open opens a PostgreSQL connection and verifies connectivity.
+// Open opens a PostgreSQL connection, configures the pool, and verifies connectivity.
 func Open(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("postgres: open: %w", err)
 	}
-	if err := db.Ping(); err != nil {
+
+	// Connection pool tuning: limits prevent goroutine/file-descriptor exhaustion.
+	db.SetMaxOpenConns(25)
+	db.SetMaxIdleConns(5)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(2 * time.Minute)
+
+	if err := db.PingContext(context.Background()); err != nil {
 		return nil, fmt.Errorf("postgres: ping: %w", err)
 	}
 	return db, nil
+}
+
+// Ping checks that the database is reachable. Use it in health checks.
+func Ping(db *sql.DB) error {
+	if err := db.PingContext(context.Background()); err != nil {
+		return fmt.Errorf("postgres: ping: %w", err)
+	}
+	return nil
 }
 
 // RunMigrations runs all pending up migrations from migrationsPath.

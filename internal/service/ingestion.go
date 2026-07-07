@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	custosmetrics "github.com/iPFSoftwares/custos/internal/api/metrics"
 	"github.com/iPFSoftwares/custos/internal/config"
 	"github.com/iPFSoftwares/custos/internal/domain"
 	"github.com/iPFSoftwares/custos/internal/queue"
@@ -54,6 +56,7 @@ func (s *IngestionService) Ingest(ctx context.Context, event *domain.RawEvent) e
 	if err := s.events.Create(ctx, event); err != nil {
 		return fmt.Errorf("ingestion: save event: %w", err)
 	}
+	custosmetrics.EventsIngestedTotal.Inc()
 
 	fingerprint := computeFingerprint(event.ErrorType, event.StackTrace)
 
@@ -89,6 +92,7 @@ func (s *IngestionService) Ingest(ctx context.Context, event *domain.RawEvent) e
 	if err := s.issues.Create(ctx, issue); err != nil {
 		return fmt.Errorf("ingestion: create issue: %w", err)
 	}
+	custosmetrics.IssuesCreatedTotal.Inc()
 
 	analysisEvent := domain.AnalysisEvent{
 		ErrorType:   event.ErrorType,

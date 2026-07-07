@@ -6,10 +6,11 @@ import (
 	"time"
 )
 
-// responseWriter is a minimal http.ResponseWriter wrapper that captures the status code.
+// responseWriter captures the status code and bytes written.
 type responseWriter struct {
 	http.ResponseWriter
-	status int
+	status       int
+	bytesWritten int
 }
 
 func newResponseWriter(w http.ResponseWriter) *responseWriter {
@@ -21,18 +22,46 @@ func (rw *responseWriter) WriteHeader(code int) {
 	rw.ResponseWriter.WriteHeader(code)
 }
 
-// Logger logs each HTTP request using log/slog structured logging.
+func (rw *responseWriter) Write(b []byte) (int, error) {
+	n, err := rw.ResponseWriter.Write(b)
+	rw.bytesWritten += n
+	return n, err //nolint:wrapcheck // delegating ResponseWriter.Write — wrapping the interface error loses its identity
+}
+
+// Logger logs each HTTP request as a structured slog entry.
+// 5xx responses are logged at ERROR level; everything else at INFO.
 func Logger(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 		rw := newResponseWriter(w)
 		next.ServeHTTP(rw, r)
-		slog.InfoContext(r.Context(), "http request",
+
+		ms := float64(time.Since(start).Microseconds()) / 1000.0
+		attrs := []any{
 			slog.String("method", r.Method),
 			slog.String("path", r.URL.Path),
 			slog.Int("status", rw.status),
-			slog.Duration("duration", time.Since(start)),
+			slog.Float64("duration_ms", ms),
+			slog.Int("bytes", rw.bytesWritten),
+			slog.String("ip", realIP(r)),
 			slog.String("request_id", GetRequestID(r.Context())),
-		)
+		}
+
+		if rw.status >= 500 {
+			slog.ErrorContext(r.Context(), "http request", attrs...)
+		} else {
+			slog.InfoContext(r.Context(), "http request", attrs...)
+		}
 	})
+}
+
+// realIP returns the best-effort client IP, honouring X-Forwarded-For when present.
+func realIP(r *http.Request) string {
+	if ip := r.Header.Get("X-Forwarded-For"); ip != "" {
+		return ip
+	}
+	if ip := r.Header.Get("X-Real-IP"); ip != "" {
+		return ip
+	}
+	return r.RemoteAddr
 }

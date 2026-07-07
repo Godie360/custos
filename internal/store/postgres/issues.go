@@ -4,14 +4,17 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
-
+	"fmt"
 
 	"github.com/google/uuid"
+
 	"github.com/iPFSoftwares/custos/internal/domain"
 	"github.com/iPFSoftwares/custos/internal/store"
 	generated "github.com/iPFSoftwares/custos/internal/store/postgres/generated"
-
 )
+
+// Compile-time interface check.
+var _ store.IssueStore = (*IssueStore)(nil)
 
 // IssueStore is the PostgreSQL implementation of store.IssueStore.
 type IssueStore struct {
@@ -29,7 +32,7 @@ func (s *IssueStore) Create(ctx context.Context, issue *domain.Issue) error {
 	}
 	checks, err := json.Marshal(issue.AISuggestedChecks)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal suggested checks: %w", err)
 	}
 	return mapError(s.q.CreateIssue(ctx, generated.CreateIssueParams{
 		ID:                issue.ID,
@@ -39,7 +42,7 @@ func (s *IssueStore) Create(ctx context.Context, issue *domain.Issue) error {
 		Environment:       issue.Environment,
 		FirstSeen:         issue.FirstSeen,
 		LastSeen:          issue.LastSeen,
-		OccurrenceCount:   int32(issue.OccurrenceCount),
+		OccurrenceCount:   int32(issue.OccurrenceCount), //nolint:gosec // G115: occurrence count is always positive and bounded in practice
 		Status:            string(issue.Status),
 		Severity:          issue.Severity,
 		AiExplanation:     issue.AIExplanation,
@@ -70,11 +73,11 @@ func (s *IssueStore) GetByFingerprint(ctx context.Context, projectID uuid.UUID, 
 func (s *IssueStore) Update(ctx context.Context, issue *domain.Issue) error {
 	checks, err := json.Marshal(issue.AISuggestedChecks)
 	if err != nil {
-		return err
+		return fmt.Errorf("marshal suggested checks: %w", err)
 	}
 	return mapError(s.q.UpdateIssue(ctx, generated.UpdateIssueParams{
 		LastSeen:          issue.LastSeen,
-		OccurrenceCount:   int32(issue.OccurrenceCount),
+		OccurrenceCount:   int32(issue.OccurrenceCount), //nolint:gosec // G115: occurrence count is always positive and bounded in practice
 		Status:            string(issue.Status),
 		Severity:          issue.Severity,
 		AiExplanation:     issue.AIExplanation,
@@ -85,11 +88,11 @@ func (s *IssueStore) Update(ctx context.Context, issue *domain.Issue) error {
 }
 
 func (s *IssueStore) List(ctx context.Context, filter store.ListIssuesFilter) ([]*domain.Issue, error) {
-	limit := int32(filter.Limit)
+	limit := int32(filter.Limit) //nolint:gosec // G115: limit is validated by handler (1–200)
 	if limit <= 0 {
 		limit = 50
 	}
-	offset := int32(filter.Offset)
+	offset := int32(filter.Offset) //nolint:gosec // G115: offset is validated upstream
 
 	var projectID uuid.NullUUID
 	if filter.ProjectID != uuid.Nil {

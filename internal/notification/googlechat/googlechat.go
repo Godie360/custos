@@ -34,7 +34,7 @@ type cardPayload struct {
 }
 
 type card struct {
-	Header   cardHeader   `json:"header"`
+	Header   cardHeader    `json:"header"`
 	Sections []cardSection `json:"sections"`
 }
 
@@ -101,7 +101,7 @@ func (n *Notifier) Notify(ctx context.Context, payload domain.AlertPayload) erro
 	if err != nil {
 		return fmt.Errorf("googlechat: post: %w", err)
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck // response body drain; error not actionable
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("googlechat: unexpected status %d", resp.StatusCode)

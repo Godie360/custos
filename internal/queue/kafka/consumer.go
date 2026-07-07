@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/segmentio/kafka-go"
+
 	"github.com/iPFSoftwares/custos/internal/config"
 	"github.com/iPFSoftwares/custos/internal/queue"
-	"github.com/segmentio/kafka-go"
 )
+
+// Compile-time interface check.
+var _ queue.Consumer = (*Consumer)(nil)
 
 // Consumer is a Kafka-backed implementation of queue.Consumer.
 type Consumer struct {
@@ -29,7 +33,7 @@ func (c *Consumer) Subscribe(ctx context.Context, topic string, handler func(ctx
 		MinBytes: 10e3, // 10KB
 		MaxBytes: 10e6, // 10MB
 	})
-	defer r.Close()
+	defer r.Close() //nolint:errcheck // reader cleanup on exit; error not actionable
 
 	for {
 		m, err := r.FetchMessage(ctx)

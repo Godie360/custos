@@ -5,8 +5,16 @@ import (
 	"database/sql"
 
 	"github.com/google/uuid"
+
 	"github.com/iPFSoftwares/custos/internal/domain"
+	"github.com/iPFSoftwares/custos/internal/store"
 	generated "github.com/iPFSoftwares/custos/internal/store/postgres/generated"
+)
+
+// Compile-time interface checks.
+var (
+	_ store.ProjectStore = (*ProjectStore)(nil)
+	_ store.APIKeyStore  = (*APIKeyStore)(nil)
 )
 
 // ProjectStore is the PostgreSQL implementation of store.ProjectStore.

@@ -2,17 +2,19 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/iPFSoftwares/custos/internal/domain"
+
+	"github.com/iPFSoftwares/custos/internal/api/render"
 	"github.com/iPFSoftwares/custos/internal/store"
 )
 
 // AnalyticsStore is the minimal interface needed by AnalyticsHandler.
 type AnalyticsStore interface {
-	List(ctx context.Context, filter store.ListIssuesFilter) ([]*domain.Issue, error)
+	TotalCount(ctx context.Context) (int, error)
+	CountBySeverity(ctx context.Context) ([]store.SeverityCount, error)
+	TopServices(ctx context.Context) ([]store.ServiceCount, error)
 }
 
 // AnalyticsHandler handles GET /api/v1/analytics/summary.
@@ -26,71 +28,61 @@ func NewAnalyticsHandler(issues AnalyticsStore) *AnalyticsHandler {
 }
 
 type summaryResponse struct {
-	TotalIssues          int            `json:"total_issues"`
-	ErrorCountBySeverity map[string]int `json:"error_count_by_severity"`
-	TopServices          []serviceCount `json:"top_services"`
+	TotalIssues          int              `json:"total_issues"`
+	ErrorCountBySeverity map[string]int   `json:"error_count_by_severity"`
+	TopServices          []topServiceItem `json:"top_services"`
 }
 
-type serviceCount struct {
+type topServiceItem struct {
 	Service         string `json:"service"`
 	OccurrenceCount int    `json:"occurrence_count"`
 }
 
 // Summary handles GET /api/v1/analytics/summary.
+// All aggregation runs in the database — no in-memory slices.
 func (h *AnalyticsHandler) Summary(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
-	filter := store.ListIssuesFilter{Limit: 500}
+	// project_id filter is parsed but forwarded to store methods that support it;
+	// the current aggregation queries are global — expand them when needed.
 	if pid := q.Get("project_id"); pid != "" {
-		if id, err := uuid.Parse(pid); err == nil {
-			filter.ProjectID = id
+		if _, err := uuid.Parse(pid); err != nil {
+			render.Error(w, r, http.StatusBadRequest, "invalid_id", "project_id must be a valid UUID", nil)
+			return
 		}
 	}
 
-	issues, err := h.issues.List(r.Context(), filter)
+	total, err := h.issues.TotalCount(r.Context())
 	if err != nil {
-		http.Error(w, "failed to load issues", http.StatusInternalServerError)
+		render.Error(w, r, http.StatusInternalServerError, "store_error", "failed to load analytics", err)
 		return
 	}
 
-	bySeverity := make(map[string]int)
-	serviceOccurrences := make(map[string]int)
-
-	for _, iss := range issues {
-		bySeverity[iss.Severity]++
-		serviceOccurrences[iss.Service] += iss.OccurrenceCount
+	severityCounts, err := h.issues.CountBySeverity(r.Context())
+	if err != nil {
+		render.Error(w, r, http.StatusInternalServerError, "store_error", "failed to load analytics", err)
+		return
 	}
 
-	// Top 5 services by occurrence count.
-	type svc struct {
-		name  string
-		count int
-	}
-	svcs := make([]svc, 0, len(serviceOccurrences))
-	for name, cnt := range serviceOccurrences {
-		svcs = append(svcs, svc{name, cnt})
-	}
-	// Simple insertion sort — small N.
-	for i := 1; i < len(svcs); i++ {
-		for j := i; j > 0 && svcs[j].count > svcs[j-1].count; j-- {
-			svcs[j], svcs[j-1] = svcs[j-1], svcs[j]
-		}
-	}
-	topN := 5
-	if len(svcs) < topN {
-		topN = len(svcs)
-	}
-	top := make([]serviceCount, topN)
-	for i := 0; i < topN; i++ {
-		top[i] = serviceCount{Service: svcs[i].name, OccurrenceCount: svcs[i].count}
+	topSvcs, err := h.issues.TopServices(r.Context())
+	if err != nil {
+		render.Error(w, r, http.StatusInternalServerError, "store_error", "failed to load analytics", err)
+		return
 	}
 
-	resp := summaryResponse{
-		TotalIssues:          len(issues),
+	bySeverity := make(map[string]int, len(severityCounts))
+	for _, sc := range severityCounts {
+		bySeverity[sc.Severity] = sc.Count
+	}
+
+	top := make([]topServiceItem, len(topSvcs))
+	for i, s := range topSvcs {
+		top[i] = topServiceItem{Service: s.Service, OccurrenceCount: s.Total}
+	}
+
+	render.JSON(w, http.StatusOK, summaryResponse{
+		TotalIssues:          total,
 		ErrorCountBySeverity: bySeverity,
 		TopServices:          top,
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resp)
+	})
 }

@@ -7,6 +7,8 @@ import (
 	"log/slog"
 
 	"github.com/google/uuid"
+
+	custosmetrics "github.com/iPFSoftwares/custos/internal/api/metrics"
 	"github.com/iPFSoftwares/custos/internal/domain"
 	"github.com/iPFSoftwares/custos/internal/queue"
 	"github.com/iPFSoftwares/custos/internal/store"
@@ -38,7 +40,10 @@ func NewAnalysisService(
 
 // Run subscribes to the analysis topic and processes messages until ctx is cancelled.
 func (s *AnalysisService) Run(ctx context.Context, topic string) error {
-	return s.consumer.Subscribe(ctx, topic, s.handleMessage)
+	if err := s.consumer.Subscribe(ctx, topic, s.handleMessage); err != nil {
+		return fmt.Errorf("analysis service: subscribe: %w", err)
+	}
+	return nil
 }
 
 func (s *AnalysisService) handleMessage(ctx context.Context, msg queue.Message) error {
@@ -59,19 +64,21 @@ func (s *AnalysisService) handleMessage(ctx context.Context, msg queue.Message) 
 
 	result, err := s.analyzer.Analyze(ctx, event)
 	if err != nil {
-		slog.ErrorContext(ctx, "analysis: AI provider error",
-			slog.String("issue_id", issueID.String()),
-			slog.String("error", err.Error()),
-		)
+		// Persist failure status (best-effort) then propagate the error upward.
+		// The consumer will NOT commit the offset, so the message is retried.
 		issue.Status = domain.IssueStatusAnalysisFailed
 		if updateErr := s.issues.Update(ctx, issue); updateErr != nil {
-			slog.ErrorContext(ctx, "analysis: update issue status",
+			// Log the secondary failure; primary error returned below.
+			slog.WarnContext(ctx, "analysis: could not persist failed status",
 				slog.String("issue_id", issueID.String()),
 				slog.String("error", updateErr.Error()),
 			)
 		}
-		return fmt.Errorf("analysis: analyze: %w", err)
+		custosmetrics.AnalysisTotal.WithLabelValues("failed").Inc()
+		return fmt.Errorf("analysis: AI provider: %w", err)
 	}
+
+	custosmetrics.AnalysisTotal.WithLabelValues("success").Inc()
 
 	issue.AIExplanation = result.Explanation
 	issue.AILikelyCause = result.LikelyCause
@@ -85,7 +92,8 @@ func (s *AnalysisService) handleMessage(ctx context.Context, msg queue.Message) 
 	if result.Severity == "high" || result.Severity == "critical" {
 		payload := domain.AlertPayload{Issue: *issue, Analysis: result}
 		if err := s.notifier.Notify(ctx, payload); err != nil {
-			slog.WarnContext(ctx, "analysis: notify failed",
+			// Notification failure is non-fatal — log and continue.
+			slog.WarnContext(ctx, "analysis: notification failed",
 				slog.String("issue_id", issueID.String()),
 				slog.String("error", err.Error()),
 			)

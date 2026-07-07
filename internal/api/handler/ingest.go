@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
 	"github.com/iPFSoftwares/custos/internal/api/middleware"
+	"github.com/iPFSoftwares/custos/internal/api/render"
 	"github.com/iPFSoftwares/custos/internal/domain"
 	"github.com/iPFSoftwares/custos/pkg/event"
 )
@@ -31,12 +33,13 @@ func NewIngestHandler(svc IngestionService) *IngestHandler {
 func (h *IngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	var p event.Payload
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		http.Error(w, "invalid JSON body", http.StatusBadRequest)
+		render.Error(w, r, http.StatusBadRequest, "invalid_body", "request body must be valid JSON", err)
 		return
 	}
 
 	if p.Service == "" || p.ErrorType == "" || p.Message == "" {
-		http.Error(w, "service, error_type, and message are required", http.StatusUnprocessableEntity)
+		render.Error(w, r, http.StatusUnprocessableEntity, "missing_fields",
+			"service, error_type, and message are required", nil)
 		return
 	}
 
@@ -47,7 +50,7 @@ func (h *IngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	project := middleware.GetProject(r.Context())
 	if project == nil {
-		http.Error(w, "project context missing", http.StatusInternalServerError)
+		render.Error(w, r, http.StatusInternalServerError, "internal_error", "project context missing", nil)
 		return
 	}
 
@@ -63,7 +66,7 @@ func (h *IngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.svc.Ingest(r.Context(), raw); err != nil {
-		http.Error(w, "failed to ingest event", http.StatusInternalServerError)
+		render.Error(w, r, http.StatusInternalServerError, "ingest_failed", "failed to ingest event", err)
 		return
 	}
 
