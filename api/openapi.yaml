@@ -1,0 +1,373 @@
+openapi: 3.0.3
+info:
+  title: Custos API
+  description: |
+    AI-powered log intelligence platform.
+    SDKs capture errors from your applications and Custos explains them in plain language.
+  version: 0.1.0
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Health
+    description: Server health check
+  - name: Ingest
+    description: SDK event ingestion
+  - name: Issues
+    description: Error issues grouped by fingerprint
+  - name: Analytics
+    description: Error trends and summary statistics
+  - name: Projects
+    description: Project and API key management
+
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        "200":
+          description: Server is healthy
+
+  /api/v1/ingest:
+    post:
+      tags: [Ingest]
+      summary: Ingest an error event from an SDK
+      operationId: ingestEvent
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventPayload"
+            example:
+              service: payments-api
+              environment: production
+              error_type: NullPointerException
+              message: "Cannot read property 'id' of undefined"
+              stack_trace:
+                - "at processPayment (payment.js:42)"
+                - "at handleRequest (server.js:108)"
+              timestamp: "2026-07-07T10:00:00Z"
+              sdk_version: "0.1.0"
+      responses:
+        "202":
+          description: Event accepted for processing
+        "400":
+          description: Invalid payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/issues:
+    get:
+      tags: [Issues]
+      summary: List issues
+      operationId: listIssues
+      parameters:
+        - name: service
+          in: query
+          schema:
+            type: string
+          description: Filter by service name
+        - name: environment
+          in: query
+          schema:
+            type: string
+          description: Filter by environment (e.g. production, staging)
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+          description: Filter by severity
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: List of issues
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Issue"
+
+  /api/v1/issues/{id}:
+    get:
+      tags: [Issues]
+      summary: Get issue by ID
+      operationId: getIssue
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Issue detail with AI explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Issue"
+        "404":
+          description: Issue not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/analytics/summary:
+    get:
+      tags: [Analytics]
+      summary: Get analytics summary
+      operationId: analyticsSummary
+      responses:
+        "200":
+          description: Analytics summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalyticsSummary"
+
+  /api/v1/projects:
+    get:
+      tags: [Projects]
+      summary: List projects
+      operationId: listProjects
+      responses:
+        "200":
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Project"
+
+  /api/v1/projects/{id}/keys:
+    post:
+      tags: [Projects]
+      summary: Create an API key for a project
+      operationId: createAPIKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [label]
+              properties:
+                label:
+                  type: string
+                  example: production-sdk
+      responses:
+        "201":
+          description: API key created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/APIKey"
+        "404":
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /api/v1/projects/{id}/keys/{kid}:
+    delete:
+      tags: [Projects]
+      summary: Revoke an API key
+      operationId: revokeAPIKey
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: kid
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "204":
+          description: API key revoked
+        "404":
+          description: Key not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Custos-Key
+      description: Per-project API key issued from the dashboard or API
+
+  schemas:
+    EventPayload:
+      type: object
+      required: [service, environment, error_type, message, stack_trace, timestamp, sdk_version]
+      properties:
+        service:
+          type: string
+          example: payments-api
+        environment:
+          type: string
+          example: production
+        error_type:
+          type: string
+          example: NullPointerException
+        message:
+          type: string
+          example: "Cannot read property 'id' of undefined"
+        stack_trace:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+        sdk_version:
+          type: string
+          example: "0.1.0"
+
+    Issue:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fingerprint:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+        service:
+          type: string
+        environment:
+          type: string
+        first_seen:
+          type: string
+          format: date-time
+        last_seen:
+          type: string
+          format: date-time
+        occurrence_count:
+          type: integer
+        status:
+          type: string
+          enum: [open, resolved, analysis_failed]
+        severity:
+          type: string
+          enum: [low, medium, high, critical]
+        ai_explanation:
+          type: string
+        ai_likely_cause:
+          type: string
+        ai_suggested_checks:
+          type: array
+          items:
+            type: string
+
+    AnalyticsSummary:
+      type: object
+      properties:
+        total_issues:
+          type: integer
+        error_count_by_severity:
+          type: object
+          additionalProperties:
+            type: integer
+          example:
+            low: 12
+            medium: 5
+            high: 3
+            critical: 1
+        top_services:
+          type: array
+          items:
+            type: object
+            properties:
+              service:
+                type: string
+              count:
+                type: integer
+
+    Project:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    APIKey:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+        key:
+          type: string
+          description: Raw key value — only returned on creation, never again
+        created_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: unauthorized
+        message:
+          type: string
+          example: missing or invalid API key

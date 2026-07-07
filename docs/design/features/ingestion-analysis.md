@@ -55,7 +55,7 @@ Events that fail filtering: stored in DB as raw events; not published to analysi
 
 - Triggered after AI analysis writes to DB.
 - Rule dimensions: severity level, service name, project ownership.
-- Delivery targets: Slack webhook, SMTP email, generic HTTPS webhook.
+- Delivery targets: Google Chat, SMTP email, generic HTTPS webhook.
 - Target: notification delivered within 60 seconds of analysis completing.
 
 ### Public REST API

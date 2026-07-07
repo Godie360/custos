@@ -41,7 +41,7 @@ Shared SDK contract:
 | Filtering stage | Severity threshold, noisy-pattern blocklist, per-project rate limit. |
 | Deduplication | Fingerprint = error type + normalized stack trace shape; group into issues. |
 | AI Analysis Engine | Call Claude API; store explanation, likely cause, severity. |
-| Notification Service | Route critical events to Slack, email, or webhook per routing rules. |
+| Notification Service | Route critical events to Google Chat, email, or webhook per routing rules. |
 | Public API | REST endpoints for dashboard and external integrations. |
 
 ### C. Admin Dashboard (Next.js)
