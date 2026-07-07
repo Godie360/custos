@@ -39,7 +39,9 @@ func NewRouter(deps RouterDeps) http.Handler {
 
 	// Health check — no auth required.
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`))
 	})
 
 	// OpenAPI spec — served for Swagger UI.
@@ -64,6 +66,7 @@ func NewRouter(deps RouterDeps) http.Handler {
 		r.Get("/analytics/summary", deps.Analytics.Summary)
 
 		// Projects.
+		r.Post("/projects", deps.ProjectsH.Create)
 		r.Get("/projects", deps.ProjectsH.List)
 		r.Post("/projects/{id}/keys", deps.ProjectsH.CreateAPIKey)
 		r.Delete("/projects/{id}/keys/{kid}", deps.ProjectsH.RevokeAPIKey)

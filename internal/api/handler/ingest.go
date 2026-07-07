@@ -63,7 +63,7 @@ func (h *IngestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.svc.Ingest(r.Context(), raw); err != nil {
-		http.Error(w, "failed to ingest event", http.StatusInternalServerError)
+		http.Error(w, "failed to ingest event: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 

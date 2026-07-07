@@ -2,18 +2,37 @@ package handler
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
+	"regexp"
+	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/iPFSoftwares/custos/internal/domain"
 )
 
+// systemOwnerID is the fixed seed user used as project owner before auth is implemented.
+var systemOwnerID = uuid.MustParse("00000000-0000-0000-0000-000000000001")
+
+var nonAlphanumeric = regexp.MustCompile(`[^a-z0-9]+`)
+
+func slugify(s string) string {
+	s = strings.ToLower(strings.TrimSpace(s))
+	s = nonAlphanumeric.ReplaceAllString(s, "-")
+	return strings.Trim(s, "-")
+}
+
 // ProjectsStore is the minimal interface needed by ProjectsHandler.
 type ProjectsStore interface {
+	Create(ctx context.Context, project *domain.Project) error
 	GetByID(ctx context.Context, id uuid.UUID) (*domain.Project, error)
+	List(ctx context.Context) ([]*domain.Project, error)
 }
 
 // APIKeysStore is the minimal interface for API key operations.
@@ -33,12 +52,47 @@ func NewProjectsHandler(projects ProjectsStore, apiKeys APIKeysStore) *ProjectsH
 	return &ProjectsHandler{projects: projects, apiKeys: apiKeys}
 }
 
-// List handles GET /api/v1/projects.
-// In a full implementation this would filter by authenticated user; here we
-// return a not-implemented stub so the route compiles and is routable.
-func (h *ProjectsHandler) List(w http.ResponseWriter, r *http.Request) {
+// Create handles POST /api/v1/projects.
+func (h *ProjectsHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Name        string `json:"name"`
+		Description string `json:"description"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Name == "" {
+		http.Error(w, "name is required", http.StatusBadRequest)
+		return
+	}
+
+	project := &domain.Project{
+		ID:        uuid.New(),
+		Name:      req.Name,
+		Slug:      slugify(req.Name),
+		OwnerID:   systemOwnerID,
+		CreatedAt: time.Now().UTC(),
+	}
+
+	if err := h.projects.Create(r.Context(), project); err != nil {
+		http.Error(w, "failed to create project", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode([]any{})
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(project)
+}
+
+// List handles GET /api/v1/projects.
+func (h *ProjectsHandler) List(w http.ResponseWriter, r *http.Request) {
+	projects, err := h.projects.List(r.Context())
+	if err != nil {
+		http.Error(w, "failed to list projects", http.StatusInternalServerError)
+		return
+	}
+	if projects == nil {
+		projects = []*domain.Project{}
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(projects)
 }
 
 // CreateAPIKey handles POST /api/v1/projects/{id}/keys.
@@ -59,17 +113,25 @@ func (h *ProjectsHandler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Label string `json:"label"`
+		Name string `json:"name"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid JSON body", http.StatusBadRequest)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Name == "" {
+		http.Error(w, "name is required", http.StatusBadRequest)
+		return
+	}
+
+	rawKey, err := generateKey()
+	if err != nil {
+		http.Error(w, "failed to generate API key", http.StatusInternalServerError)
 		return
 	}
 
 	key := &domain.APIKey{
 		ID:        uuid.New(),
 		ProjectID: projectID,
-		Label:     req.Label,
+		Label:     req.Name,
+		KeyHash:   hashKey(rawKey),
+		CreatedAt: time.Now().UTC(),
 	}
 
 	if err := h.apiKeys.Create(r.Context(), key); err != nil {
@@ -79,7 +141,13 @@ func (h *ProjectsHandler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(key)
+	json.NewEncoder(w).Encode(map[string]any{
+		"id":         key.ID,
+		"key":        rawKey,
+		"project_id": key.ProjectID,
+		"label":      key.Label,
+		"created_at": key.CreatedAt,
+	})
 }
 
 // RevokeAPIKey handles DELETE /api/v1/projects/{id}/keys/{kid}.
@@ -100,4 +168,17 @@ func (h *ProjectsHandler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func generateKey() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return "custos_" + hex.EncodeToString(b), nil
+}
+
+func hashKey(raw string) string {
+	sum := sha256.Sum256([]byte(raw))
+	return hex.EncodeToString(sum[:])
 }
