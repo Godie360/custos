@@ -1,7 +1,6 @@
 <div align="center">
 
-<!-- Replace with your generated logo -->
-<!-- <img src="docs/assets/logo.png" alt="Custos" width="120" /> -->
+<img src="docs/assets/logo.png" alt="Custos" width="120" />
 
 # Custos
 
