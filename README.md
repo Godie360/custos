@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/logo.png" alt="Custos" width="120" />
+<img src="docs/assets/logo.png" alt="Custos" width="200" />
 
 # Custos
 
