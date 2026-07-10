@@ -227,31 +227,7 @@ Browse and try every endpoint interactively at **http://localhost:8081** (Swagge
 
 ## Architecture
 
-```
-┌─────────────┐    HTTP POST     ┌──────────────────┐
-│  Language   │ ──────────────►  │   Go + Chi API   │
-│    SDK      │  X-Custos-Key    │   (port 8080)    │
-└─────────────┘                  └────────┬─────────┘
-                                          │ produce
-                                          ▼
-                                 ┌──────────────────┐
-                                 │  Kafka Topic     │
-                                 │  custos.events   │
-                                 └────────┬─────────┘
-                                          │ consume
-                                          ▼
-                                 ┌──────────────────┐    ┌──────────────────┐
-                                 │  Analysis Worker │───►│   AI Provider    │
-                                 │  (same process)  │    │  Claude / OpenAI │
-                                 └────────┬─────────┘    │  Gemini / Ollama │
-                                          │ store         └──────────────────┘
-                                          ▼
-                                 ┌──────────────────┐    ┌──────────────────┐
-                                 │   PostgreSQL     │    │  Notifications   │
-                                 │  issues, events  │    │  Google Chat     │
-                                 └──────────────────┘    │  Email · Webhook │
-                                                         └──────────────────┘
-```
+![System Architecture](docs/assets/system-architecture.png)
 
 ### Package dependency rule
 
