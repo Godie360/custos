@@ -8,9 +8,9 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/iPFSoftwares/custos/internal/domain"
-	"github.com/iPFSoftwares/custos/internal/store"
-	generated "github.com/iPFSoftwares/custos/internal/store/postgres/generated"
+	"github.com/Godie360/custos/internal/domain"
+	"github.com/Godie360/custos/internal/store"
+	generated "github.com/Godie360/custos/internal/store/postgres/generated"
 )
 
 // Compile-time interface check.

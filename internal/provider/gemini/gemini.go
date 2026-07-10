@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/iPFSoftwares/custos/internal/config"
-	"github.com/iPFSoftwares/custos/internal/domain"
+	"github.com/Godie360/custos/internal/config"
+	"github.com/Godie360/custos/internal/domain"
 )
 
 const (
@@ -96,26 +96,19 @@ func (a *Analyzer) Analyze(ctx context.Context, event domain.AnalysisEvent) (dom
 		}
 		req.Header.Set("Content-Type", "application/json")
 
-		resp, err := a.client.Do(req)
+		respBytes, status, err := a.doRequest(req)
 		if err != nil {
 			lastErr = fmt.Errorf("gemini: http: %w", err)
 			continue
 		}
-		defer resp.Body.Close() //nolint:errcheck // response body drain; error not actionable
 
-		respBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			lastErr = fmt.Errorf("gemini: read response: %w", err)
+		if status == http.StatusTooManyRequests || status >= 500 {
+			lastErr = fmt.Errorf("gemini: status %d", status)
 			continue
 		}
 
-		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
-			lastErr = fmt.Errorf("gemini: status %d", resp.StatusCode)
-			continue
-		}
-
-		if resp.StatusCode != http.StatusOK {
-			return result, fmt.Errorf("gemini: status %d: %s", resp.StatusCode, string(respBytes))
+		if status != http.StatusOK {
+			return result, fmt.Errorf("gemini: status %d: %s", status, string(respBytes))
 		}
 
 		var gr geminiResponse
@@ -130,6 +123,19 @@ func (a *Analyzer) Analyze(ctx context.Context, event domain.AnalysisEvent) (dom
 	}
 
 	return result, fmt.Errorf("gemini: max retries exceeded: %w", lastErr)
+}
+
+func (a *Analyzer) doRequest(req *http.Request) ([]byte, int, error) {
+	resp, err := a.client.Do(req)
+	if err != nil {
+		return nil, 0, fmt.Errorf("do: %w", err)
+	}
+	defer resp.Body.Close() //nolint:errcheck // response body drain; error not actionable
+	b, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, 0, fmt.Errorf("read body: %w", err)
+	}
+	return b, resp.StatusCode, nil
 }
 
 func buildPrompt(event domain.AnalysisEvent) string {

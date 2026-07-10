@@ -6,8 +6,8 @@ import (
 
 	"github.com/segmentio/kafka-go"
 
-	"github.com/iPFSoftwares/custos/internal/config"
-	"github.com/iPFSoftwares/custos/internal/queue"
+	"github.com/Godie360/custos/internal/config"
+	"github.com/Godie360/custos/internal/queue"
 )
 
 // Compile-time interface check.

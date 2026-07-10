@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	custosmetrics "github.com/iPFSoftwares/custos/internal/api/metrics"
+	custosmetrics "github.com/Godie360/custos/internal/api/metrics"
 )
 
 // Metrics records Prometheus HTTP metrics: request count and latency histogram.

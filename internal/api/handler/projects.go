@@ -16,8 +16,8 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"github.com/iPFSoftwares/custos/internal/api/render"
-	"github.com/iPFSoftwares/custos/internal/domain"
+	"github.com/Godie360/custos/internal/api/render"
+	"github.com/Godie360/custos/internal/domain"
 )
 
 // systemOwnerID is the fixed seed user used as project owner before auth is implemented.

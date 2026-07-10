@@ -6,8 +6,8 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/iPFSoftwares/custos/internal/api/render"
-	"github.com/iPFSoftwares/custos/internal/store"
+	"github.com/Godie360/custos/internal/api/render"
+	"github.com/Godie360/custos/internal/store"
 )
 
 // AnalyticsStore is the minimal interface needed by AnalyticsHandler.

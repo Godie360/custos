@@ -8,10 +8,10 @@ import (
 
 	"github.com/google/uuid"
 
-	custosmetrics "github.com/iPFSoftwares/custos/internal/api/metrics"
-	"github.com/iPFSoftwares/custos/internal/domain"
-	"github.com/iPFSoftwares/custos/internal/queue"
-	"github.com/iPFSoftwares/custos/internal/store"
+	custosmetrics "github.com/Godie360/custos/internal/api/metrics"
+	"github.com/Godie360/custos/internal/domain"
+	"github.com/Godie360/custos/internal/queue"
+	"github.com/Godie360/custos/internal/store"
 )
 
 // AnalysisService consumes analysis work items from Kafka, calls the AI

@@ -13,7 +13,7 @@ import (
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 
-	"github.com/iPFSoftwares/custos/internal/domain"
+	"github.com/Godie360/custos/internal/domain"
 )
 
 // Open opens a PostgreSQL connection, configures the pool, and verifies connectivity.

@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/iPFSoftwares/custos/internal/domain"
+	"github.com/Godie360/custos/internal/domain"
 )
 
 // ListIssuesFilter specifies optional filters for listing issues.

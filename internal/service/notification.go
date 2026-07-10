@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/iPFSoftwares/custos/internal/domain"
+	"github.com/Godie360/custos/internal/domain"
 )
 
 // Compile-time interface check.

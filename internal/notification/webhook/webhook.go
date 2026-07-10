@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/iPFSoftwares/custos/internal/domain"
+	"github.com/Godie360/custos/internal/domain"
 )
 
 const requestTimeout = 10 * time.Second
