@@ -128,11 +128,14 @@ func (a *Analyzer) Analyze(ctx context.Context, event domain.AnalysisEvent) (dom
 func (a *Analyzer) doRequest(req *http.Request) ([]byte, int, error) {
 	resp, err := a.client.Do(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, fmt.Errorf("do: %w", err)
 	}
 	defer resp.Body.Close() //nolint:errcheck // response body drain; error not actionable
 	b, err := io.ReadAll(resp.Body)
-	return b, resp.StatusCode, err
+	if err != nil {
+		return nil, 0, fmt.Errorf("read body: %w", err)
+	}
+	return b, resp.StatusCode, nil
 }
 
 func buildPrompt(event domain.AnalysisEvent) string {
