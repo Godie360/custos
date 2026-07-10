@@ -18,13 +18,7 @@ Custos captures errors from your applications, runs them through an AI analysis 
 
 ## How it works
 
-```
-Your App  ──►  SDK  ──►  POST /ingest  ──►  Kafka  ──►  AI Worker  ──►  PostgreSQL
-               │          (API key auth)                  (Claude / OpenAI             │
-               │                                           Gemini / Ollama)            │
-               └─ local redaction                                                      ▼
-                  before sending                                           Dashboard · Alerts · API
-```
+![Custos Architecture](docs/assets/architecture.png)
 
 1. **SDK installed in your app** — drops into your existing logging setup with one line
 2. **Events sent to the Custos server** — authenticated per project, over HTTP
