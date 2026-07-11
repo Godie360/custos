@@ -43,6 +43,7 @@ type AIConfig struct {
 // NotificationConfig holds all notification channel settings.
 type NotificationConfig struct {
 	GoogleChatWebhookURL string
+	SlackWebhookURL      string
 	SMTPHost             string
 	SMTPPort             string
 	SMTPFrom             string
@@ -78,6 +79,7 @@ func Load() Config {
 		},
 		Notification: NotificationConfig{
 			GoogleChatWebhookURL: getEnv("GOOGLE_CHAT_WEBHOOK_URL", ""),
+			SlackWebhookURL:      getEnv("SLACK_WEBHOOK_URL", ""),
 			SMTPHost:             getEnv("SMTP_HOST", ""),
 			SMTPPort:             getEnv("SMTP_PORT", "587"),
 			SMTPFrom:             getEnv("SMTP_FROM", ""),
