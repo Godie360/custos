@@ -1,113 +1,265 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
+import { CheckCircle, EyeOff, RefreshCw, SlidersHorizontal } from 'lucide-react'
 import { api } from '#/lib/api'
+import { SeverityBadge, StatusBadge } from '#/components/Badge'
+import { timeAgo } from '#/lib/utils'
 import type { Issue } from '#/lib/types'
 
 export const Route = createFileRoute('/issues/')({ component: IssuesFeed })
 
 const SEVERITIES = ['', 'low', 'medium', 'high', 'critical']
+const STATUSES = ['', 'open', 'resolved', 'ignored']
 
-const severityBadge: Record<string, string> = {
-  low: 'bg-gray-700 text-gray-300',
-  medium: 'bg-yellow-900 text-yellow-300',
-  high: 'bg-orange-900 text-orange-300',
-  critical: 'bg-red-900 text-red-400',
-  error: 'bg-orange-900 text-orange-300',
-}
-
-function SeverityBadge({ s }: { s: string }) {
+function IssueRow({ issue, onPatch }: { issue: Issue; onPatch: (id: string, status: string) => void }) {
   return (
-    <span className={`px-2 py-0.5 rounded text-xs font-medium ${severityBadge[s] ?? 'bg-gray-700 text-gray-400'}`}>
-      {s}
-    </span>
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: '2fr 1fr 1fr 90px 80px 70px 100px',
+        alignItems: 'center',
+        padding: '12px 16px',
+        borderBottom: '1px solid var(--border)',
+        gap: 12,
+      }}
+      className="hover:bg-[#0F1915] transition-colors group"
+    >
+      {/* Error info */}
+      <div className="min-w-0">
+        <Link
+          to="/issues/$id"
+          params={{ id: issue.id }}
+          style={{ color: 'var(--text-1)', fontSize: 13.5, fontWeight: 500 }}
+          className="hover:text-[#2DD4BF] transition-colors block truncate"
+        >
+          {issue.error_type}
+        </Link>
+        <p style={{ color: 'var(--text-3)', fontSize: 11.5, marginTop: 2 }} className="truncate">
+          {issue.message}
+        </p>
+      </div>
+
+      {/* Service */}
+      <div className="min-w-0">
+        <span
+          style={{
+            background: 'rgba(45,212,191,0.07)', color: '#2DD4BF',
+            fontSize: 11.5, padding: '3px 8px', borderRadius: 5, fontFamily: 'monospace',
+          }}
+          className="truncate block"
+        >
+          {issue.service}
+        </span>
+      </div>
+
+      {/* Environment */}
+      <span style={{ color: 'var(--text-2)', fontSize: 12 }}>{issue.environment}</span>
+
+      {/* Severity */}
+      <SeverityBadge severity={issue.severity} />
+
+      {/* Status */}
+      <StatusBadge status={issue.status} />
+
+      {/* Count */}
+      <div style={{ textAlign: 'right' }}>
+        <span style={{ color: 'var(--text-1)', fontSize: 13, fontWeight: 600 }}>
+          {issue.occurrence_count.toLocaleString()}
+        </span>
+        <span style={{ color: 'var(--text-3)', fontSize: 10, display: 'block' }}>occurrences</span>
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+        {issue.status !== 'resolved' && (
+          <button
+            onClick={() => onPatch(issue.id, 'resolved')}
+            style={{ color: '#4ADE80' }}
+            className="hover:opacity-70 transition-opacity"
+            title="Resolve"
+          >
+            <CheckCircle size={14} />
+          </button>
+        )}
+        {issue.status !== 'ignored' && (
+          <button
+            onClick={() => onPatch(issue.id, 'ignored')}
+            style={{ color: 'var(--text-3)' }}
+            className="hover:opacity-70 transition-opacity"
+            title="Ignore"
+          >
+            <EyeOff size={14} />
+          </button>
+        )}
+      </div>
+    </div>
   )
 }
 
-function timeAgo(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime()
-  const mins = Math.floor(diff / 60_000)
-  if (mins < 60) return `${mins}m ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  return `${Math.floor(hrs / 24)}d ago`
-}
-
 function IssuesFeed() {
+  const qc = useQueryClient()
   const [service, setService] = useState('')
   const [environment, setEnvironment] = useState('')
   const [severity, setSeverity] = useState('')
+  const [status, setStatus] = useState('')
+  const [showFilters, setShowFilters] = useState(false)
 
-  const { data: issues = [], isLoading, error } = useQuery({
-    queryKey: ['issues', { service, environment, severity }],
-    queryFn: () => api.issues.list({ service: service || undefined, environment: environment || undefined, severity: severity || undefined, limit: 50 }),
+  const { data: issues = [], isLoading, isFetching, refetch } = useQuery({
+    queryKey: ['issues', { service, environment, severity, status }],
+    queryFn: () =>
+      api.issues.list({
+        service: service || undefined,
+        environment: environment || undefined,
+        severity: severity || undefined,
+        limit: 100,
+      }),
     refetchInterval: 15_000,
+    select: data =>
+      status ? data.filter(i => i.status === status) : data,
   })
 
+  const patch = useMutation({
+    mutationFn: ({ id, s }: { id: string; s: string }) =>
+      api.issues.patch(id, { status: s as Issue['status'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['issues'] })
+      void qc.invalidateQueries({ queryKey: ['analytics'] })
+    },
+  })
+
+  const open = issues.filter(i => i.status === 'open').length
+  const resolved = issues.filter(i => i.status === 'resolved').length
+  const critical = issues.filter(i => i.severity === 'critical').length
+
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold text-white">Issues</h1>
-        <span className="text-xs text-gray-500">auto-refreshes every 15s</span>
+    <div>
+      {/* Page header */}
+      <div className="flex items-center justify-between mb-5">
+        <div>
+          <h1 style={{ color: 'var(--text-1)', fontSize: 20, fontWeight: 700, marginBottom: 4 }}>Issues</h1>
+          <div className="flex gap-4">
+            {[
+              { label: 'Open', val: open, color: '#2DD4BF' },
+              { label: 'Resolved', val: resolved, color: '#4ADE80' },
+              { label: 'Critical', val: critical, color: '#F87171' },
+            ].map(({ label, val, color }) => (
+              <span key={label} style={{ fontSize: 12, color: 'var(--text-2)' }}>
+                <span style={{ color, fontWeight: 700 }}>{val}</span> {label}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            className="btn-ghost flex items-center gap-1.5"
+            style={{ color: showFilters ? '#2DD4BF' : undefined }}
+          >
+            <SlidersHorizontal size={13} /> Filters
+          </button>
+          <button
+            onClick={() => refetch()}
+            className="btn-ghost flex items-center gap-1.5"
+            disabled={isFetching}
+          >
+            <RefreshCw size={13} className={isFetching ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex gap-3 mb-5">
-        <input
-          value={service}
-          onChange={e => setService(e.target.value)}
-          placeholder="Filter by service…"
-          className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-indigo-500 w-44"
-        />
-        <input
-          value={environment}
-          onChange={e => setEnvironment(e.target.value)}
-          placeholder="Environment…"
-          className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-indigo-500 w-36"
-        />
-        <select
-          value={severity}
-          onChange={e => setSeverity(e.target.value)}
-          className="px-3 py-1.5 bg-gray-800 border border-gray-700 rounded text-sm text-gray-200 focus:outline-none focus:border-indigo-500"
-        >
-          {SEVERITIES.map(s => (
-            <option key={s} value={s}>{s || 'All severities'}</option>
-          ))}
-        </select>
-      </div>
-
-      {isLoading && <p className="text-gray-500 text-sm">Loading…</p>}
-      {error && <p className="text-red-400 text-sm">Failed to load issues.</p>}
-
-      {!isLoading && !error && issues.length === 0 && (
-        <p className="text-gray-500 text-sm">No issues match your filters.</p>
+      {/* Filters bar */}
+      {showFilters && (
+        <div className="card flex gap-3 flex-wrap mb-4" style={{ padding: '14px 16px' }}>
+          <input
+            value={service}
+            onChange={e => setService(e.target.value)}
+            placeholder="Service…"
+            style={{ padding: '6px 12px', fontSize: 12.5, width: 160 }}
+          />
+          <input
+            value={environment}
+            onChange={e => setEnvironment(e.target.value)}
+            placeholder="Environment…"
+            style={{ padding: '6px 12px', fontSize: 12.5, width: 140 }}
+          />
+          <select
+            value={severity}
+            onChange={e => setSeverity(e.target.value)}
+            style={{ padding: '6px 12px', fontSize: 12.5 }}
+          >
+            {SEVERITIES.map(s => <option key={s} value={s}>{s || 'All severities'}</option>)}
+          </select>
+          <select
+            value={status}
+            onChange={e => setStatus(e.target.value)}
+            style={{ padding: '6px 12px', fontSize: 12.5 }}
+          >
+            {STATUSES.map(s => <option key={s} value={s}>{s || 'All statuses'}</option>)}
+          </select>
+          {(service || environment || severity || status) && (
+            <button
+              className="btn-ghost"
+              style={{ fontSize: 12 }}
+              onClick={() => { setService(''); setEnvironment(''); setSeverity(''); setStatus('') }}
+            >
+              Clear
+            </button>
+          )}
+        </div>
       )}
 
-      <div className="space-y-2">
-        {issues.map((issue: Issue) => (
-          <Link
-            key={issue.id}
-            to="/issues/$id"
-            params={{ id: issue.id }}
-            className="block bg-gray-900 border border-gray-800 rounded-lg px-4 py-3 hover:border-gray-600 transition-colors"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <SeverityBadge s={issue.severity} />
-                  <span className="text-xs text-gray-500 font-mono">{issue.service}</span>
-                  <span className="text-xs text-gray-600">{issue.environment}</span>
-                </div>
-                <p className="text-sm font-medium text-gray-100 truncate">{issue.error_type}</p>
-                <p className="text-xs text-gray-500 truncate mt-0.5">{issue.message}</p>
+      {/* Table */}
+      <div className="card overflow-hidden">
+        {/* Header */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '2fr 1fr 1fr 90px 80px 70px 100px',
+            padding: '10px 16px',
+            borderBottom: '1px solid var(--border)',
+            gap: 12,
+            background: 'rgba(0,0,0,0.2)',
+          }}
+        >
+          {['Error', 'Service', 'Environment', 'Severity', 'Status', 'Count', ''].map(h => (
+            <span key={h} style={{ color: 'var(--text-3)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              {h}
+            </span>
+          ))}
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-0">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
+                <div className="skeleton" style={{ height: 14, width: '60%', marginBottom: 6 }} />
+                <div className="skeleton" style={{ height: 10, width: '40%' }} />
               </div>
-              <div className="shrink-0 text-right">
-                <p className="text-xs text-gray-400">{issue.occurrence_count}×</p>
-                <p className="text-xs text-gray-600 mt-0.5">{timeAgo(issue.last_seen)}</p>
-              </div>
-            </div>
-          </Link>
-        ))}
+            ))}
+          </div>
+        ) : issues.length === 0 ? (
+          <div style={{ padding: '60px 0', textAlign: 'center' }}>
+            <p style={{ color: 'var(--text-3)', fontSize: 14 }}>No issues match your filters.</p>
+          </div>
+        ) : (
+          issues.map(issue => (
+            <IssueRow
+              key={issue.id}
+              issue={issue}
+              onPatch={(id, s) => patch.mutate({ id, s })}
+            />
+          ))
+        )}
+
+        {!isLoading && issues.length > 0 && (
+          <div style={{ padding: '10px 16px', borderTop: '1px solid var(--border)' }}>
+            <span style={{ color: 'var(--text-3)', fontSize: 12 }}>
+              {issues.length} issue{issues.length !== 1 ? 's' : ''} · refreshes every 15s
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )

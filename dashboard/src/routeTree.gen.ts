@@ -9,16 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as HealthRouteImport } from './routes/health'
 import { Route as FiltersRouteImport } from './routes/filters'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ProjectsIndexRouteImport } from './routes/projects/index'
 import { Route as IssuesIndexRouteImport } from './routes/issues/index'
 import { Route as IssuesIdRouteImport } from './routes/issues/$id'
 
+const HealthRoute = HealthRouteImport.update({
+  id: '/health',
+  path: '/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FiltersRoute = FiltersRouteImport.update({
   id: '/filters',
   path: '/filters',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnalyticsRoute = AnalyticsRouteImport.update({
@@ -50,7 +62,9 @@ const IssuesIdRoute = IssuesIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/dashboard': typeof DashboardRoute
   '/filters': typeof FiltersRoute
+  '/health': typeof HealthRoute
   '/issues/$id': typeof IssuesIdRoute
   '/issues/': typeof IssuesIndexRoute
   '/projects/': typeof ProjectsIndexRoute
@@ -58,7 +72,9 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/dashboard': typeof DashboardRoute
   '/filters': typeof FiltersRoute
+  '/health': typeof HealthRoute
   '/issues/$id': typeof IssuesIdRoute
   '/issues': typeof IssuesIndexRoute
   '/projects': typeof ProjectsIndexRoute
@@ -67,7 +83,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
+  '/dashboard': typeof DashboardRoute
   '/filters': typeof FiltersRoute
+  '/health': typeof HealthRoute
   '/issues/$id': typeof IssuesIdRoute
   '/issues/': typeof IssuesIndexRoute
   '/projects/': typeof ProjectsIndexRoute
@@ -75,14 +93,31 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/analytics' | '/filters' | '/issues/$id' | '/issues/' | '/projects/'
+    | '/'
+    | '/analytics'
+    | '/dashboard'
+    | '/filters'
+    | '/health'
+    | '/issues/$id'
+    | '/issues/'
+    | '/projects/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/analytics' | '/filters' | '/issues/$id' | '/issues' | '/projects'
+  to:
+    | '/'
+    | '/analytics'
+    | '/dashboard'
+    | '/filters'
+    | '/health'
+    | '/issues/$id'
+    | '/issues'
+    | '/projects'
   id:
     | '__root__'
     | '/'
     | '/analytics'
+    | '/dashboard'
     | '/filters'
+    | '/health'
     | '/issues/$id'
     | '/issues/'
     | '/projects/'
@@ -91,7 +126,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
+  DashboardRoute: typeof DashboardRoute
   FiltersRoute: typeof FiltersRoute
+  HealthRoute: typeof HealthRoute
   IssuesIdRoute: typeof IssuesIdRoute
   IssuesIndexRoute: typeof IssuesIndexRoute
   ProjectsIndexRoute: typeof ProjectsIndexRoute
@@ -99,11 +136,25 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/health': {
+      id: '/health'
+      path: '/health'
+      fullPath: '/health'
+      preLoaderRoute: typeof HealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/filters': {
       id: '/filters'
       path: '/filters'
       fullPath: '/filters'
       preLoaderRoute: typeof FiltersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analytics': {
@@ -147,7 +198,9 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
+  DashboardRoute: DashboardRoute,
   FiltersRoute: FiltersRoute,
+  HealthRoute: HealthRoute,
   IssuesIdRoute: IssuesIdRoute,
   IssuesIndexRoute: IssuesIndexRoute,
   ProjectsIndexRoute: ProjectsIndexRoute,
