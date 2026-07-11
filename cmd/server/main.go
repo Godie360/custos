@@ -14,6 +14,7 @@ import (
 	"github.com/Godie360/custos/internal/config"
 	"github.com/Godie360/custos/internal/domain"
 	"github.com/Godie360/custos/internal/notification/googlechat"
+	"github.com/Godie360/custos/internal/notification/slack"
 	"github.com/Godie360/custos/internal/notification/webhook"
 	"github.com/Godie360/custos/internal/provider"
 	kafkaimpl "github.com/Godie360/custos/internal/queue/kafka"
@@ -159,6 +160,9 @@ func buildNotificationService(cfg config.Config) *service.NotificationService {
 	var notifiers []domain.Notifier
 	if cfg.Notification.GoogleChatWebhookURL != "" {
 		notifiers = append(notifiers, googlechat.New(cfg.Notification.GoogleChatWebhookURL))
+	}
+	if cfg.Notification.SlackWebhookURL != "" {
+		notifiers = append(notifiers, slack.New(cfg.Notification.SlackWebhookURL))
 	}
 	if cfg.Notification.WebhookURL != "" {
 		notifiers = append(notifiers, webhook.New(cfg.Notification.WebhookURL))

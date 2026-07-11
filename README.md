@@ -33,7 +33,7 @@ Custos captures errors from your applications, runs them through an AI analysis 
 - **Pluggable AI providers** — Claude, OpenAI, Gemini, or a self-hosted Ollama model
 - **Privacy-first** — SDKs strip API keys, passwords, tokens, credit cards, and PII locally before any data leaves your host
 - **Async, non-blocking** — background batch queue with exponential backoff retry; never blocks your application
-- **Notifications** — Google Chat cards, email, and generic webhooks; Slack coming in Phase 1
+- **Notifications** — Google Chat cards, Slack, email, and generic webhooks
 - **Full OpenAPI spec** — browse and try every endpoint in the built-in Swagger UI at `localhost:8081`
 - **Prometheus metrics** — `/metrics` endpoint ready for scraping
 - **Self-hosted** — one `docker compose up` and you own your data
@@ -79,6 +79,7 @@ CUSTOS_AI_MODEL=                   # leave blank to use the provider default
 
 # Optional — notifications
 GOOGLE_CHAT_WEBHOOK_URL=https://chat.googleapis.com/v1/spaces/...
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
 WEBHOOK_URL=https://your-webhook.example.com
 SMTP_HOST=smtp.example.com
 SMTP_PORT=587
