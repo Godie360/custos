@@ -66,8 +66,9 @@ export class CustosPinoStream {
       if (level < 50) return;
 
       const message = String(log['msg'] ?? log['message'] ?? '');
-      const stack = String(log['stack'] ?? log['err']?.['stack'] ?? '');
-      const errorType = String(log['type'] ?? log['err']?.['type'] ?? 'Error');
+      const logErr = log['err'] as Record<string, unknown> | undefined;
+      const stack = String(log['stack'] ?? logErr?.['stack'] ?? '');
+      const errorType = String(log['type'] ?? logErr?.['type'] ?? 'Error');
 
       this.client.enqueue({
         service: this.client['config'].service,
