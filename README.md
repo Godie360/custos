@@ -333,8 +333,8 @@ custos/
 
 | Phase | Status | Scope |
 |---|---|---|
-| **Phase 1** — Foundations | 🚧 In progress | Go server, Kafka pipeline, Python SDK, AI adapters, Docker Compose |
-| **Phase 2** — Core Platform | Pending | Node.js SDK, deduplication, filtering, TanStack dashboard |
+| **Phase 1** — Foundations | ✅ Complete | Go server, Kafka pipeline, Python SDK, AI adapters, Docker Compose |
+| **Phase 2** — Core Platform | 🚧 In progress | Node.js SDK, deduplication, filtering, TanStack dashboard |
 | **Phase 3** — Analytics & Alerting | Pending | MTTD, error rate trends, multi-channel alert routing |
 | **Phase 4** — Hardening & Release | Pending | Auth, RBAC, rate limiting, Helm chart, public release |
 
