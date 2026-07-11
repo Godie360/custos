@@ -69,10 +69,11 @@ func main() {
 	eventStore := pgstore.NewEventStore(db)
 	projectStore := pgstore.NewProjectStore(db)
 	apiKeyStore := pgstore.NewAPIKeyStore(db)
+	filterStore := pgstore.NewFilterStore(db)
 
 	// 7. Build services.
 	notificationSvc := buildNotificationService(cfg)
-	ingestionSvc := service.NewIngestionService(eventStore, issueStore, kafkaProducer, cfg)
+	ingestionSvc := service.NewIngestionService(eventStore, issueStore, filterStore, kafkaProducer, cfg)
 
 	var analysisSvc *service.AnalysisService
 	if analyzer != nil {
@@ -88,6 +89,7 @@ func main() {
 		Issues:    handler.NewIssuesHandler(issueStore),
 		Analytics: handler.NewAnalyticsHandler(issueStore),
 		ProjectsH: handler.NewProjectsHandler(projectStore, apiKeyStore),
+		FiltersH:  handler.NewFiltersHandler(filterStore, projectStore),
 	})
 
 	srv := &http.Server{
