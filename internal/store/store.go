@@ -62,3 +62,10 @@ type APIKeyStore interface {
 	GetByHash(ctx context.Context, hash string) (*domain.APIKey, error)
 	Revoke(ctx context.Context, id uuid.UUID) error
 }
+
+// FilterStore defines persistence operations for ingest filter rules.
+type FilterStore interface {
+	Create(ctx context.Context, rule *domain.FilterRule) error
+	ListByProject(ctx context.Context, projectID uuid.UUID) ([]*domain.FilterRule, error)
+	Delete(ctx context.Context, id uuid.UUID, projectID uuid.UUID) error
+}

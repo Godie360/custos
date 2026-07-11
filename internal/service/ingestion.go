@@ -24,6 +24,7 @@ import (
 type IngestionService struct {
 	events   store.EventStore
 	issues   store.IssueStore
+	filters  store.FilterStore
 	producer queue.Producer
 	cfg      config.Config
 }
@@ -32,12 +33,14 @@ type IngestionService struct {
 func NewIngestionService(
 	events store.EventStore,
 	issues store.IssueStore,
+	filters store.FilterStore,
 	producer queue.Producer,
 	cfg config.Config,
 ) *IngestionService {
 	return &IngestionService{
 		events:   events,
 		issues:   issues,
+		filters:  filters,
 		producer: producer,
 		cfg:      cfg,
 	}
@@ -51,6 +54,17 @@ func (s *IngestionService) Ingest(ctx context.Context, event *domain.RawEvent) e
 	}
 	if event.ReceivedAt.IsZero() {
 		event.ReceivedAt = time.Now().UTC()
+	}
+
+	// Check filter rules — drop matching events before any storage or analysis.
+	rules, err := s.filters.ListByProject(ctx, event.ProjectID)
+	if err != nil {
+		return fmt.Errorf("ingestion: load filter rules: %w", err)
+	}
+	for _, rule := range rules {
+		if rule.Matches(event.ErrorType, event.Message, event.Service, event.Environment) {
+			return nil // silently drop — caller still returns 202 to the SDK
+		}
 	}
 
 	if err := s.events.Create(ctx, event); err != nil {

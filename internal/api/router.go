@@ -28,6 +28,7 @@ type RouterDeps struct {
 	Issues    *handler.IssuesHandler
 	Analytics *handler.AnalyticsHandler
 	ProjectsH *handler.ProjectsHandler
+	FiltersH  *handler.FiltersHandler
 }
 
 // NewRouter constructs and returns a fully configured Chi router.
@@ -105,6 +106,11 @@ func NewRouter(deps RouterDeps) http.Handler {
 		r.Get("/projects", deps.ProjectsH.List)
 		r.Post("/projects/{id}/keys", deps.ProjectsH.CreateAPIKey)
 		r.Delete("/projects/{id}/keys/{kid}", deps.ProjectsH.RevokeAPIKey)
+
+		// Filter rules.
+		r.Get("/projects/{id}/filters", deps.FiltersH.List)
+		r.Post("/projects/{id}/filters", deps.FiltersH.Create)
+		r.Delete("/projects/{id}/filters/{fid}", deps.FiltersH.Delete)
 	})
 
 	return r
