@@ -1,0 +1,114 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #07090A;
+  --bg-sidebar: #050708;
+  --bg-card: #0D1117;
+  --bg-card-hover: #111920;
+  --border: #1A2535;
+  --border-light: #243040;
+  --teal: #2DD4BF;
+  --teal-light: #5EEAD4;
+  --teal-dim: rgba(45, 212, 191, 0.08);
+  --teal-glow: rgba(45, 212, 191, 0.15);
+  --red: #F87171;
+  --orange: #FB923C;
+  --amber: #FCD34D;
+  --green: #4ADE80;
+  --text-1: #E8F4FF;
+  --text-2: #7A9DB8;
+  --text-3: #3D5470;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-light); }
+
+input, select, textarea {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-1);
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 2px var(--teal-dim);
+}
+input::placeholder { color: var(--text-3); }
+select option { background: #0D1117; }
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.btn-primary {
+  background: var(--teal);
+  color: #07090A;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn-primary:hover { opacity: 0.88; }
+.btn-primary:active { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.btn-ghost:hover { background: var(--bg-card-hover); color: var(--text-1); }
+.btn-ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--border) 50%, var(--bg-card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: 4px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 13.5px;
+  color: var(--text-2);
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+  cursor: pointer;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text-1); }
+.nav-item.active { background: var(--teal-dim); color: var(--teal); border: 1px solid rgba(45,212,191,0.15); }
+
+.recharts-tooltip-wrapper { outline: none !important; }

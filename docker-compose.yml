@@ -70,7 +70,16 @@ services:
     depends_on:
       - server
 
-  # dashboard: added in Phase 2 once dashboard/ is scaffolded
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.dashboard
+    ports:
+      - "3000:3000"
+    depends_on:
+      server:
+        condition: service_started
+    restart: unless-stopped
 
 volumes:
   postgres_data:
